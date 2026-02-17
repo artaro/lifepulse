@@ -8,3 +8,4 @@ export { default as MonthlyBarChart } from './MonthlyBarChart';
 export { default as TransactionFAB } from './TransactionFAB';
 export { default as ImportDialog } from './ImportDialog';
 export { default as AccountForm } from './AccountForm';
+export { default as AccountBalanceList } from './AccountBalanceList';

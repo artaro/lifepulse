@@ -30,10 +30,15 @@ export default function AccountForm({
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line
       setName(initialData?.name || '');
+
       setType(initialData?.type || AccountType.BANK);
+
       setBalance(String(initialData?.balance ?? 0));
+
       setBankName(initialData?.bankName || '');
+
       setLast4(initialData?.accountNumberLast4 || '');
     }
   }, [open, initialData]);

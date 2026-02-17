@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { PDFDocument } from 'pdf-lib';
+
 
 const genAI = new GoogleGenerativeAI(process.env.LLM_API_KEY || '');
 
@@ -35,130 +35,66 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const formData = await request.formData();
-    const file = formData.get('file') as File | null;
-    const password = formData.get('password') as string | null;
-    const categoriesJson = formData.get('categories') as string | null;
+   
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { file } = await request.json() as any;
 
     if (!file) {
-      return NextResponse.json(
-        { error: 'No file uploaded' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
-    let systemInstruction = SYSTEM_PROMPT_BASE;
-    if (categoriesJson) {
-      try {
-        const categories = JSON.parse(categoriesJson);
-        const categoryNames = categories.map((c: any) => c.name).join(', ');
-        // If there are no categories, default to generic behavior or "Fill in later"
-        const catList = categoryNames || "Fill in later";
-        systemInstruction = systemInstruction.replace('[AVAILABLE_CATEGORIES]', catList);
-      } catch (e) {
-        console.error('Failed to parse categories for prompt:', e);
-        systemInstruction = systemInstruction.replace('[AVAILABLE_CATEGORIES]', "Fill in later");
-      }
-    } else {
-      systemInstruction = systemInstruction.replace('[AVAILABLE_CATEGORIES]', "Fill in later");
-    }
-
-    let bytes = await file.arrayBuffer();
-    let buffer = Buffer.from(bytes);
-    const mimeType = file.type;
-
-    // Handle Encrypted PDFs
-    if (mimeType === 'application/pdf') {
-      try {
-        // Attempt to load the PDF. If it's encrypted just reading it might fail or return isEncrypted=true
-        // We use ignoreEncryption: true to load the structure first to check isEncrypted
-        const pdfDoc = await PDFDocument.load(bytes, { ignoreEncryption: true });
-        
-        if (pdfDoc.isEncrypted) {
-          if (!password) {
-            return NextResponse.json(
-              { error: 'Password required', code: 'PASSWORD_REQUIRED' },
-              { status: 401 }
-            );
-          }
-
-          // Try to unlock with password by reloading with password
-          try {
-             // pdf-lib load method with password decodes it
-             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-             const decryptedDoc = await PDFDocument.load(bytes, { password } as any);
-             // Save back to buffer
-             const savedBytes = await decryptedDoc.save();
-             buffer = Buffer.from(savedBytes);
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
-          } catch (e) {
-             return NextResponse.json(
-              { error: 'Incorrect password', code: 'PASSWORD_REQUIRED' },
-              { status: 401 }
-            );
-          }
-        }
-      } catch (e) {
-        console.error('Error checking PDF encryption:', e);
-        // If it fails to load, it might be a weird file, let Gemini try or fail
-      }
-    }
+    // specific handling for base64
+    const base64Data = file.split(',')[1];
+    const buffer = Buffer.from(base64Data, 'base64');
+    const bytes = new Uint8Array(buffer);
 
     // Initialize the model
     const model = genAI.getGenerativeModel({ 
       model: 'gemini-2.5-flash-lite',
-      systemInstruction: systemInstruction,
+      systemInstruction: SYSTEM_PROMPT_BASE,
     });
 
-    let promptParts: any[] = [];
-
-    // Handle different file types
-    if (mimeType === 'text/csv' || mimeType.includes('text/')) {
-      // For CSV/Text, pass as text
-      const textContent = buffer.toString('utf-8');
-      promptParts = [
-        { text: "Extract transactions from this CSV/Text content:" },
-        { text: textContent }
-      ];
-    } else {
-      // For PDF or Images, pass as inlineData
-      // Note: Gemini API supports application/pdf via inlineData
-      promptParts = [
-        { text: "Extract transactions from this statement file:" },
-        {
-          inlineData: {
-            data: buffer.toString('base64'),
-            mimeType: mimeType,
-          },
-        }
-      ];
-    }
-
-    const result = await model.generateContent(promptParts);
+    // Generate content
+    const result = await model.generateContent([
+      "Extract date, description, amount, and type (income/expense) from this bank statement. " +
+      "Return ONLY a valid JSON array of objects with keys: date (YYYY-MM-DD), description, amount (number), type (lowercase string). " +
+      "If the image is not a statement, return an empty array []. " +
+      "Do not include markdown formatting like ```json ... ```.",
+      {
+        inlineData: {
+          data: Buffer.from(bytes).toString('base64'),
+          mimeType: 'image/jpeg', // Assuming jpeg for now from compression
+        },
+      },
+    ]);
+    
     const response = await result.response;
     const text = response.text();
     
-    // Clean up markdown code blocks
-    const cleanerText = text.replace(/```json/g, '').replace(/```/g, '').trim();
-
-    let transactions;
-    try {
-      transactions = JSON.parse(cleanerText);
-      if (!Array.isArray(transactions) && transactions.transactions) {
-        transactions = transactions.transactions;
-      }
-      if (!Array.isArray(transactions)) {
-        throw new Error('Response is not an array');
-      }
-    } catch (e) {
-      console.error('Failed to parse Gemini response:', text);
-      return NextResponse.json(
-        { error: 'Failed to parse LLM response', raw: text },
-        { status: 500 }
-      );
+    // Clean up
+    let cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const firstBracket = cleanedText.indexOf('[');
+    const lastBracket = cleanedText.lastIndexOf(']');
+    if (firstBracket !== -1 && lastBracket !== -1) {
+      cleanedText = cleanedText.substring(firstBracket, lastBracket + 1);
     }
 
-    return NextResponse.json({ transactions });
+    let transactions = [];
+    try {
+      transactions = JSON.parse(cleanedText);
+    } catch {
+       console.warn('Failed to parse Gemini response as JSON', text);
+    }
+
+    // ... validation ...
+   
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const validTransactions = transactions.filter((t: any) => {
+        return t.date && t.description && t.amount && (t.type === 'income' || t.type === 'expense');
+    });
+
+    return NextResponse.json({ transactions: validTransactions });
+
   } catch (error) {
     console.error('Parse statement error:', error);
     return NextResponse.json(

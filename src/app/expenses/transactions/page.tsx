@@ -31,7 +31,7 @@ export default function TransactionsPage() {
   const [filterStartDate, setFilterStartDate] = useState('');
   const [filterEndDate, setFilterEndDate] = useState('');
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50); // Increased default for split view
+  const [pageSize] = useState(50); // Increased default for split view
   
   // Selection State
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -69,6 +69,7 @@ export default function TransactionsPage() {
 
   // --- Handlers ---
 
+ 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCreate = async (data: any) => {
     try {
@@ -106,6 +107,7 @@ export default function TransactionsPage() {
   };
 
   // Inline update from list
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleInlineUpdate = async (id: string, input: any) => {
       try {
           await updateMutation.mutateAsync({ id, input });
@@ -136,7 +138,11 @@ export default function TransactionsPage() {
     }
 
     const next = new Set(selectedIds);
-    next.has(id) ? next.delete(id) : next.add(id);
+    if (next.has(id)) {
+        next.delete(id);
+    } else {
+        next.add(id);
+    }
     setSelectedIds(next);
   };
 

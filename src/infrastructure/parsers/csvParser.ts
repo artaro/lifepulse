@@ -140,14 +140,7 @@ export function toTransactionInputs(
  */
 function parseDate(dateStr: string): string {
   // Try common formats
-  const formats = [
-    // DD/MM/YYYY
-    /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/,
-    // YYYY-MM-DD
-    /^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/,
-    // MM/DD/YYYY
-    /^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/,
-  ];
+
 
   // YYYY-MM-DD format
   const isoMatch = dateStr.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})$/);

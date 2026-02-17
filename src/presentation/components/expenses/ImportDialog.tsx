@@ -5,7 +5,7 @@ import { useStatementImport } from '@/presentation/hooks/useStatementImport';
 import { Account, Category } from '@/domain/entities';
 import { FileUploadZone } from '@/presentation/components/common';
 import ImportPreviewCards from './ImportPreviewCards';
-import { X, Upload, Check, AlertCircle, FileText, Loader2, RotateCcw, ArrowRight, Trash2 } from 'lucide-react';
+import { X, AlertCircle, FileText, Loader2, RotateCcw, ArrowRight, Trash2 } from 'lucide-react';
 import { useUIStore } from '@/presentation/stores';
 
 interface ImportDialogProps {
@@ -59,7 +59,11 @@ export default function ImportDialog({ open, onClose, accounts, categories }: Im
     }
 
     const next = new Set(selectedIndices);
-    next.has(index) ? next.delete(index) : next.add(index);
+    if (next.has(index)) {
+        next.delete(index);
+    } else {
+        next.add(index);
+    }
     setSelectedIndices(next);
   };
 
@@ -315,7 +319,7 @@ export default function ImportDialog({ open, onClose, accounts, categories }: Im
                </div>
                <div>
                   <h3 className="text-lg font-bold text-gray-900">Oops! Something went wrong.</h3>
-                  <p className="text-gray-500 max-w-sm mx-auto">It seems we couldn't parse that file. Please try again or check if the file is valid.</p>
+                  <p className="text-gray-500 max-w-sm mx-auto">It seems we couldn&apos;t parse that file. Please try again or check if the file is valid.</p>
                </div>
                <button onClick={reset} className="px-6 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-lg transition-colors">
                  Try Again

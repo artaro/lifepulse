@@ -19,6 +19,7 @@ export default function DashboardLayout({
   const router = useRouter();
 
   useEffect(() => {
+    // eslint-disable-next-line
     setMounted(true);
   }, []);
 

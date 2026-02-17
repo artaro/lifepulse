@@ -5,6 +5,7 @@ import { useUIStore } from '@/presentation/stores';
 import { TransactionForm } from '@/presentation/components/expenses';
 import ImportDialog from '@/presentation/components/expenses/ImportDialog';
 import { useAccounts, useCategories, useCreateTransaction } from '@/presentation/hooks';
+import { CreateTransactionInput } from '@/domain/entities';
 
 export default function GlobalModals() {
   const { modals, closeTransactionModal, closeImportModal, showSnackbar } = useUIStore();
@@ -12,7 +13,7 @@ export default function GlobalModals() {
   const { data: categories = [] } = useCategories();
   const createMutation = useCreateTransaction();
 
-  const handleTransactionSubmit = async (data: any) => {
+  const handleTransactionSubmit = async (data: CreateTransactionInput) => {
     try {
       await createMutation.mutateAsync(data);
       showSnackbar('Transaction saved successfully', 'success');

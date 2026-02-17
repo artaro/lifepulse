@@ -6,6 +6,7 @@ import { useCreateTransactionsBulk } from './useTransactions';
 import { CreateTransactionInput } from '@/domain/entities';
 import { TransactionType, StatementSource } from '@/domain/enums';
 import { generateMockTransactions } from '@/data/mock/mockStatementTransactions';
+import { compressImage } from '@/lib/imageUtils';
 
 const LAST_IMPORT_KEY = 'lifepulse_last_import';
 
@@ -93,8 +94,19 @@ export function useStatementImport(): UseStatementImportReturn {
       // Step 1: Prepare data
       setStatus('parsing'); // Use parsing status immediately to show loader
       
+      
+      // Compress if image to avoid payload limits (common on mobile)
+      let fileToUpload = file;
+      if (file.type.startsWith('image/')) {
+        try {
+          fileToUpload = await compressImage(file);
+        } catch (e) {
+          console.warn('Image compression failed, trying original', e);
+        }
+      }
+
       const formData = new FormData();
-      formData.append('file', file);
+      formData.append('file', fileToUpload);
       if (pdfPassword) {
         formData.append('password', pdfPassword);
       }
@@ -148,7 +160,7 @@ export function useStatementImport(): UseStatementImportReturn {
       setError(err instanceof Error ? err.message : 'Failed to parse file');
       setStatus('error');
     }
-  }, [file, pdfPassword, status]);
+  }, [file, pdfPassword, status, categories]);
 
   const loadDemoData = useCallback(() => {
     const mockData = generateMockTransactions(10);

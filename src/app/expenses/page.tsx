@@ -5,8 +5,7 @@ import Link from 'next/link';
 import { TrendingUp, TrendingDown, Wallet, AlertCircle } from 'lucide-react';
 import { 
   StatCard, 
-  EmptyState, 
-  GlobalLoader 
+  EmptyState
 } from '@/presentation/components/common';
 import {
   TransactionRow,
@@ -14,9 +13,10 @@ import {
   OverviewChart,
   CalendarPanel,
   TransactionForm,
+  AccountBalanceList,
 } from '@/presentation/components/expenses';
 import { formatCurrency } from '@/lib/formatters';
-import { StatementSource, TransactionType } from '@/domain/enums';
+import { StatementSource } from '@/domain/enums';
 import {
   useTransactions,
   useTransactionSummary,
@@ -50,6 +50,7 @@ export default function ExpenseDashboardPage() {
   const isLoading = isSummaryLoading || isTransactionsLoading;
   const isError = isSummaryError || isTransactionsError;
 
+ 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleCreate = async (data: any) => {
     try {
@@ -125,9 +126,14 @@ export default function ExpenseDashboardPage() {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Calendar Panel - 7/12 on large */}
-            <div className="lg:col-span-7">
+            {/* Calendar Panel - 8/12 on large */}
+            <div className="lg:col-span-8">
               <CalendarPanel transactions={transactions} />
+            </div>
+
+            {/* Account Balance List - 4/12 on large */}
+            <div className="lg:col-span-4 h-full">
+              <AccountBalanceList accounts={accounts} />
             </div>
 
             {/* Pie Chart - 5/12 on large */}
@@ -135,8 +141,8 @@ export default function ExpenseDashboardPage() {
               <ExpensePieChart transactions={transactions} />
             </div>
 
-            {/* Overview Chart - Full width */}
-            <div className="lg:col-span-12">
+            {/* Overview Chart - 7/12 on large */}
+            <div className="lg:col-span-7">
               <OverviewChart transactions={transactions} />
             </div>
           </div>

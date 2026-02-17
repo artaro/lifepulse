@@ -9,15 +9,15 @@ import {
   ChevronDown 
 } from 'lucide-react';
 import { TransactionType } from '@/domain/enums';
-import { Account, Category } from '@/domain/entities';
+import { Account, Category, CreateTransactionInput } from '@/domain/entities';
 
 interface TransactionFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: CreateTransactionInput) => void;
   accounts: Account[];
   categories: Category[];
-  initialData?: any;
+  initialData?: Partial<CreateTransactionInput>;
   loading?: boolean;
   isEdit?: boolean;
 }
@@ -44,6 +44,7 @@ export default function TransactionForm({
   useEffect(() => {
     if (open) {
       if (initialData) {
+        // eslint-disable-next-line
         setFormData({
             description: initialData.description || '',
             amount: initialData.amount?.toString() || '',

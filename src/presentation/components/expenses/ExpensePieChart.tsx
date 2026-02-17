@@ -54,12 +54,15 @@ export default function ExpensePieChart({ transactions, title = 'Spending by Cat
       .slice(0, 6);
   }, [transactions]);
 
+ 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderLegendText = (value: string, entry: any) => {
     const { payload } = entry;
-    // Tailwind classes for legend text
+    // Simple legend again
     return <span className="text-gray-700 font-medium text-sm ml-1">{payload.icon} {value}</span>;
   };
+
+  const dayOfMonth = new Date().getDate();
 
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
@@ -68,44 +71,64 @@ export default function ExpensePieChart({ transactions, title = 'Spending by Cat
       </h3>
 
       {filteredData.length > 0 ? (
-        <div className="flex-grow min-h-[300px]">
-          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-            <PieChart>
-              <Pie
-                data={filteredData}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-              >
-                {filteredData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
-                ))}
-              </Pie>
-              <Tooltip 
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                formatter={(value: any) => formatCurrency(Number(value))}
-                contentStyle={{ 
-                    borderRadius: '1rem', 
-                    border: 'none', 
-                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                    backgroundColor: 'white',
-                    fontFamily: 'inherit'
-                }}
-                itemStyle={{ color: '#374151', fontWeight: 600 }}
-              />
-              <Legend 
-                layout="vertical" 
-                verticalAlign="middle" 
-                align="right"
-                formatter={renderLegendText}
-                iconType="circle" 
-              />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <>
+            <div className="flex-grow min-h-[220px]">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+                <PieChart>
+                <Pie
+                    data={filteredData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                >
+                    {filteredData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                    ))}
+                </Pie>
+                <Tooltip 
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    formatter={(value: any) => formatCurrency(Number(value))}
+                    contentStyle={{ 
+                        borderRadius: '1rem', 
+                        border: 'none', 
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        backgroundColor: 'white',
+                        fontFamily: 'inherit'
+                    }}
+                    itemStyle={{ color: '#374151', fontWeight: 600 }}
+                />
+                <Legend 
+                    layout="vertical" 
+                    verticalAlign="middle" 
+                    align="right"
+                    formatter={renderLegendText}
+                    iconType="circle" 
+                />
+                </PieChart>
+            </ResponsiveContainer>
+            </div>
+            
+            {/* Daily Averages Box */}
+            <div className="mt-4 pt-4 border-t border-gray-50">
+                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Daily Averages</p>
+                <div className="grid grid-cols-2 gap-3">
+                    {filteredData.slice(0, 4).map((item) => (
+                        <div key={item.name} className="bg-gray-50 rounded-xl p-2.5 flex items-center justify-between">
+                            <div className="flex items-center gap-1.5 min-w-0">
+                                <span className="text-sm">{item.icon}</span>
+                                <span className="text-xs font-medium text-gray-700 truncate">{item.name}</span>
+                            </div>
+                            <span className="text-xs font-bold text-gray-900">
+                                ~{formatCurrency(item.value / dayOfMonth)}
+                            </span>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </>
       ) : (
         <div className="flex-grow flex flex-col items-center justify-center min-h-[300px] text-center">
           <div className="text-5xl mb-3 opacity-50">📉</div>

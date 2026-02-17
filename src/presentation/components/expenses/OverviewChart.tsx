@@ -52,15 +52,6 @@ export default function OverviewChart({ transactions, title = 'Financial Overvie
     return Array.from(dataMap.values()).sort((a, b) => a.date.getTime() - b.date.getTime());
   }, [transactions]);
 
-  const averages = useMemo(() => {
-    if (data.length === 0) return { income: 0, expense: 0 };
-    const totalIncome = data.reduce((sum, item) => sum + item.income, 0);
-    const totalExpense = data.reduce((sum, item) => sum + item.expense, 0);
-    return {
-      income: totalIncome / data.length,
-      expense: totalExpense / data.length,
-    };
-  }, [data]);
 
   return (
     <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
@@ -69,9 +60,7 @@ export default function OverviewChart({ transactions, title = 'Financial Overvie
             <h3 className="text-lg font-bold text-gray-900">
               {title}
             </h3>
-            <p className="text-xs text-gray-500 font-medium mt-0.5">
-              Avg. Exp: <span className="text-gray-700">{(averages.expense / 1000).toFixed(1)}k / mo</span>
-            </p>
+
           </div>
       </div>
 

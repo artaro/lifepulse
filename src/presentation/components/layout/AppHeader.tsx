@@ -3,7 +3,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, User, LogOut, Bell } from 'lucide-react';
 import { useAuth } from '@/presentation/hooks/useAuth';
-import { SIDEBAR_WIDTH } from '@/lib/constants';
 
 interface AppHeaderProps {
   onMenuClick: () => void;

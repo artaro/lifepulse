@@ -13,7 +13,7 @@ interface CalendarPanelProps {
 type ViewType = 'expense' | 'income' | 'total';
 
 export default function CalendarPanel({ transactions }: CalendarPanelProps) {
-  const [view, setView] = useState<ViewType>('expense');
+  const [view, setView] = useState<ViewType>('total');
   const [currentDate, setCurrentDate] = useState(new Date());
 
   const year = currentDate.getFullYear();
@@ -109,7 +109,7 @@ export default function CalendarPanel({ transactions }: CalendarPanelProps) {
             </div>
 
             <div className="flex bg-gray-100 p-1 rounded-lg">
-                {(['expense', 'income', 'total'] as const).map((v) => (
+                {(['total', 'expense', 'income'] as const).map((v) => (
                     <button
                         key={v}
                         onClick={() => setView(v)}

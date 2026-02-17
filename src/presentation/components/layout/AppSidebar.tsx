@@ -8,7 +8,6 @@ import {
   Receipt, 
   Tags, 
   Landmark, 
-  Rocket,
   X
 } from 'lucide-react';
 import { APP_NAME } from '@/lib/constants';

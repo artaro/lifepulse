@@ -7,7 +7,6 @@ interface CategoryChipProps {
   category?: Category;
   selected?: boolean;
   onClick?: () => void;
-  onDelete?: () => void;
   compact?: boolean;
 }
 
@@ -15,7 +14,6 @@ export default function CategoryChip({
   category,
   selected,
   onClick,
-  onDelete,
   compact = false,
 }: CategoryChipProps) {
   if (!category) return null;

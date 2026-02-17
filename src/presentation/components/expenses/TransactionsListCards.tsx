@@ -35,8 +35,6 @@ export default function TransactionsListCards({
   const [incomePage, setIncomePage] = useState(1);
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single'; id: string } | null>(null);
   
-  // Popover state
-  const [hoveredCategory, setHoveredCategory] = useState<{ index: number; rect: DOMRect } | null>(null);
 
   const expenseTransactions = useMemo(
     () => transactions.filter(tx => tx.type === 'expense'),
@@ -220,50 +218,11 @@ export default function TransactionsListCards({
     );
   };
 
-  // Pagination Helper
-  const Pagination = ({ page, count, onChange }: { page: number, count: number, onChange: (p: number) => void }) => {
-    if (count <= 1) return null;
-    return (
-      <div className="flex justify-center gap-2 mt-4">
-        <button 
-          disabled={page === 1} 
-          onClick={() => onChange(page - 1)}
-          className="px-3 py-1 rounded-lg border border-gray-200 text-xs font-medium hover:bg-gray-50 disabled:opacity-50"
-        >
-          Prev
-        </button>
-        <span className="text-xs font-medium py-1 px-2 text-gray-600">
-          {page} / {count}
-        </span>
-        <button 
-          disabled={page === count} 
-          onClick={() => onChange(page + 1)}
-          className="px-3 py-1 rounded-lg border border-gray-200 text-xs font-medium hover:bg-gray-50 disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
-    );
-  };
 
   return (
     <div 
       className={`pb-24 ${selectedIndices.size > 0 ? 'mb-16' : ''}`}
     >
-      {/* Category Name Popover */}
-      {hoveredCategory && (
-        <div 
-          className="fixed z-50 px-3 py-1.5 bg-white rounded-lg shadow-xl border border-gray-100 text-xs font-bold text-gray-800 pointer-events-none transform -translate-x-1/2"
-          style={{ 
-            top: hoveredCategory.rect.top - 40, 
-            left: hoveredCategory.rect.left + hoveredCategory.rect.width / 2 
-          }}
-        >
-          {/* Using simplistic category lookup, ideally pass full transation index logic if needed */}
-          Category
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-white" />
-        </div>
-      )}
 
       {/* Income */}
       {incomeTransactions.length > 0 && (
@@ -329,6 +288,32 @@ export default function TransactionsListCards({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// Pagination Helper
+function Pagination({ page, count, onChange }: { page: number, count: number, onChange: (p: number) => void }) {
+  if (count <= 1) return null;
+  return (
+    <div className="flex justify-center gap-2 mt-4">
+      <button 
+        disabled={page === 1} 
+        onClick={() => onChange(page - 1)}
+        className="px-3 py-1 rounded-lg border border-gray-200 text-xs font-medium hover:bg-gray-50 disabled:opacity-50"
+      >
+        Prev
+      </button>
+      <span className="text-xs font-medium py-1 px-2 text-gray-600">
+        {page} / {count}
+      </span>
+      <button 
+        disabled={page === count} 
+        onClick={() => onChange(page + 1)}
+        className="px-3 py-1 rounded-lg border border-gray-200 text-xs font-medium hover:bg-gray-50 disabled:opacity-50"
+      >
+        Next
+      </button>
     </div>
   );
 }
