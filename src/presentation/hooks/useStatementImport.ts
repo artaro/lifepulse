@@ -93,8 +93,8 @@ export function useStatementImport(): UseStatementImportReturn {
     try {
       // Step 1: Prepare data
       setStatus('parsing'); // Use parsing status immediately to show loader
-      
-      
+
+
       // Compress if image to avoid payload limits (common on mobile)
       let fileToUpload = file;
       if (file.type.startsWith('image/')) {
@@ -111,14 +111,6 @@ export function useStatementImport(): UseStatementImportReturn {
         formData.append('password', pdfPassword);
       }
 
-      // Send available categories for prediction
-      const categoryList = categories.map(c => ({ 
-        id: c.id, 
-        name: c.name, 
-        type: c.type 
-      }));
-      formData.append('categories', JSON.stringify(categoryList));
-      
       // Step 2: Send to LLM API
       const response = await fetch('/api/parse-statement', {
         method: 'POST',
@@ -127,7 +119,7 @@ export function useStatementImport(): UseStatementImportReturn {
 
       if (!response.ok) {
         const err = await response.json();
-        
+
         // Handle password required
         if (response.status === 401 && err.code === 'PASSWORD_REQUIRED') {
           setStatus('needs_password');

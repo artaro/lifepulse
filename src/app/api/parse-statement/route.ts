@@ -15,14 +15,8 @@ Strict Rules:
   - "date": YYYY-MM-DD
   - "time": HH:mm (24-hour) or "" if missing
   - "description": Look for 'รายละเอียด' column not 'รายการ' column. If not found, use the main description column.
-  - "amount": Positive number
-  - "type": "income" (credit/deposit) or "expense" (debit/withdrawal). Default to "expense" if unclear.
-
-Category Prediction Rules:
-- Use the provided JSON list of categories: [AVAILABLE_CATEGORIES]
-- Try to match the transaction description to the most relevant category name.
-- If NO category matches well, use "Fill in later".
-- Return the EXACT category NAME from the list.
+  - "amount": Positive number (float). ABSOLUTELY NO NEGATIVE SIGNS or commas.
+  - "type": "income" (if amount has a minus sign in the image, e.g. -500.00) or "expense" (if amount is positive). Default to "expense".
 
 Output ONLY this JSON array. No markdown formatting. No explanation.`;
 
@@ -35,7 +29,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-   
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { file } = await request.json() as any;
 
@@ -49,17 +43,14 @@ export async function POST(request: NextRequest) {
     const bytes = new Uint8Array(buffer);
 
     // Initialize the model
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.5-flash-lite',
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.5-flash',
       systemInstruction: SYSTEM_PROMPT_BASE,
     });
 
     // Generate content
     const result = await model.generateContent([
-      "Extract date, description, amount, and type (income/expense) from this bank statement. " +
-      "Return ONLY a valid JSON array of objects with keys: date (YYYY-MM-DD), description, amount (number), type (lowercase string). " +
-      "If the image is not a statement, return an empty array []. " +
-      "Do not include markdown formatting like ```json ... ```.",
+      "Extract transactions from this image. Return ONLY a valid JSON array.",
       {
         inlineData: {
           data: Buffer.from(bytes).toString('base64'),
@@ -67,10 +58,10 @@ export async function POST(request: NextRequest) {
         },
       },
     ]);
-    
+
     const response = await result.response;
     const text = response.text();
-    
+
     // Clean up
     let cleanedText = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const firstBracket = cleanedText.indexOf('[');
@@ -83,14 +74,14 @@ export async function POST(request: NextRequest) {
     try {
       transactions = JSON.parse(cleanedText);
     } catch {
-       console.warn('Failed to parse Gemini response as JSON', text);
+      console.warn('Failed to parse Gemini response as JSON', text);
     }
 
     // ... validation ...
-   
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const validTransactions = transactions.filter((t: any) => {
-        return t.date && t.description && t.amount && (t.type === 'income' || t.type === 'expense');
+      return t.date && t.description && t.amount && (t.type === 'income' || t.type === 'expense');
     });
 
     return NextResponse.json({ transactions: validTransactions });
