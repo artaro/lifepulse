@@ -1,22 +1,10 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  IconButton,
-  ToggleButton,
-  ToggleButtonGroup,
-  Grid,
-  Tooltip,
-} from '@mui/material';
-import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
-import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import { Transaction } from '@/domain/entities';
 import { TransactionType } from '@/domain/enums';
 import { formatCurrency } from '@/lib/formatters';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface CalendarPanelProps {
   transactions: Transaction[];
@@ -100,146 +88,108 @@ export default function CalendarPanel({ transactions }: CalendarPanelProps) {
   };
 
   return (
-    <Card>
-      <CardContent sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            mb: 3,
-            flexWrap: 'wrap',
-            gap: 2,
-          }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton onClick={handlePrevMonth} size="small">
-              <ChevronLeftIcon />
-            </IconButton>
-            <Typography variant="h6" sx={{ fontWeight: 600, minWidth: 140, textAlign: 'center' }}>
-              {currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
-            </Typography>
-            <IconButton onClick={handleNextMonth} size="small">
-              <ChevronRightIcon />
-            </IconButton>
-          </Box>
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+        <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
+            <div className="flex items-center gap-2">
+                <button 
+                   onClick={handlePrevMonth} 
+                   className="p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                    <ChevronLeft size={20} />
+                </button>
+                <h3 className="text-lg font-bold text-gray-900 min-w-[140px] text-center">
+                    {currentDate.toLocaleDateString('default', { month: 'long', year: 'numeric' })}
+                </h3>
+                <button 
+                   onClick={handleNextMonth} 
+                   className="p-1 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                    <ChevronRight size={20} />
+                </button>
+            </div>
 
-          <ToggleButtonGroup
-            value={view}
-            exclusive
-            onChange={(_, v) => v && setView(v)}
-            size="small"
-            sx={{ borderRadius: 2 }}
-          >
-            <ToggleButton value="expense" sx={{ px: 2, fontFamily: 'Outfit' }}>
-              Expense
-            </ToggleButton>
-            <ToggleButton value="income" sx={{ px: 2, fontFamily: 'Outfit' }}>
-              Income
-            </ToggleButton>
-            <ToggleButton value="total" sx={{ px: 2, fontFamily: 'Outfit' }}>
-              Total
-            </ToggleButton>
-          </ToggleButtonGroup>
-        </Box>
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+                {(['expense', 'income', 'total'] as const).map((v) => (
+                    <button
+                        key={v}
+                        onClick={() => setView(v)}
+                        className={`px-3 py-1.5 text-xs font-semibold rounded-md capitalize transition-all ${
+                            view === v 
+                            ? 'bg-white text-gray-900 shadow-sm' 
+                            : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                    >
+                        {v}
+                    </button>
+                ))}
+            </div>
+        </div>
 
         {/* Weekday Headers */}
-        <Grid container columns={7} sx={{ mb: 1 }}>
+        <div className="grid grid-cols-7 mb-2">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-            <Grid key={day} size={1} sx={{ textAlign: 'center' }}>
-              <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                {day}
-              </Typography>
-            </Grid>
+            <div key={day} className="text-center text-xs font-semibold text-gray-400">
+               {day}
+            </div>
           ))}
-        </Grid>
+        </div>
 
         {/* Calendar Grid */}
-        <Grid container columns={7}>
+        <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((item, index) => {
             if (!item.date) {
-              return <Grid key={`empty-${index}`} size={1} sx={{ aspectRatio: '1/1' }} />;
+               return <div key={`empty-${index}`} className="aspect-square" />;
             }
 
             const value = getDayValue(item.date);
-            const isToday =
-              item.date.toDateString() === new Date().toDateString();
-            
+            const isToday = item.date.toDateString() === new Date().toDateString();
             const intensity = Math.min(Math.abs(value) / 2000, 1);
             const isDarkBackground = intensity > 0.6;
 
             return (
-              <Grid
+              <div
                 key={item.date.toISOString()}
-                size={1}
-                sx={{
-                  aspectRatio: '1/1',
-                  p: 0.5,
-                  position: 'relative',
+                className={`
+                    relative aspect-square p-1 rounded-lg border flex flex-col items-center justify-center transition-all group
+                    ${isToday ? 'border-primary' : 'border-gray-50'}
+                    ${value !== 0 ? 'hover:scale-105 hover:shadow-md hover:z-10' : ''}
+                `}
+                style={{
+                    backgroundColor: value !== 0 ? getDayColor(value) : 'transparent',
                 }}
               >
-                <Box
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    borderRadius: 2,
-                    border: isToday ? '2px solid #6C5CE7' : '1px solid #f0f0f0',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    pt: 0.5,
-                    cursor: 'default',
-                    backgroundColor: value !== 0 ? getDayColor(value) : 'transparent',
-                    color: value !== 0 
-                      ? (isDarkBackground ? '#fff' : '#2d3436') 
-                      : 'text.primary',
-                    transition: 'all 0.2s',
-                    '&:hover': {
-                      transform: 'scale(1.05)',
-                      boxShadow: 2,
-                      zIndex: 1,
-                    },
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontSize: '0.7rem',
-                      fontWeight: isToday ? 700 : 400,
-                      opacity: value !== 0 ? 1 : 0.7,
-                    }}
+                  <span 
+                    className={`text-[10px] ${
+                        value !== 0 
+                        ? (isDarkBackground ? 'text-white' : 'text-gray-900') 
+                        : (isToday ? 'font-bold text-primary' : 'text-gray-400')
+                    }`}
                   >
-                    {item.dayNum}
-                  </Typography>
+                      {item.dayNum}
+                  </span>
+                  
                   {value !== 0 && (
-                    <Tooltip title={formatCurrency(value)}>
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          mt: 0.5,
-                          width: '100%',
-                          textAlign: 'center',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          whiteSpace: 'nowrap',
-                          px: 0.5,
-                        }}
-                      >
-                        {Math.abs(value) >= 1000
-                          ? `${(Math.abs(value) / 1000).toFixed(1)}k`
-                          : Math.abs(value).toFixed(0)}
-                      </Typography>
-                    </Tooltip>
+                      <>
+                        <span 
+                            className={`text-[9px] font-bold mt-0.5 max-w-full overflow-hidden text-ellipsis whitespace-nowrap px-0.5 ${
+                                isDarkBackground ? 'text-white' : 'text-gray-900'
+                            }`}
+                        >
+                            {Math.abs(value) >= 1000
+                            ? `${(Math.abs(value) / 1000).toFixed(1)}k`
+                            : Math.abs(value).toFixed(0)}
+                        </span>
+                        
+                        {/* Tooltip */}
+                        <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                            {formatCurrency(value)}
+                        </div>
+                      </>
                   )}
-                </Box>
-              </Grid>
+              </div>
             );
           })}
-        </Grid>
-      </CardContent>
-    </Card>
+        </div>
+    </div>
   );
 }

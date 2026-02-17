@@ -1,55 +1,44 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Button, SxProps, Theme } from '@mui/material';
 
 interface EmptyStateProps {
   emoji?: string;
   title: string;
-  description: string;
+  description?: string;
   actionLabel?: string;
   onAction?: () => void;
-  sx?: SxProps<Theme>;
 }
 
 export default function EmptyState({
-  emoji = '🤷‍♂️',
+  emoji = '📭',
   title,
   description,
   actionLabel,
   onAction,
-  sx,
 }: EmptyStateProps) {
   return (
-    <Box
-      sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        py: 8,
-        px: 3,
-        textAlign: 'center',
-        ...sx,
-      }}
-    >
-      <Typography sx={{ fontSize: '4rem', mb: 2, lineHeight: 1 }}>
+    <div className="flex flex-col items-center justify-center py-12 px-4 text-center rounded-2xl bg-gray-50/50 border-2 border-dashed border-gray-200">
+      <div className="text-4xl mb-4 bg-white w-16 h-16 rounded-2xl flex items-center justify-center shadow-sm border border-gray-100">
         {emoji}
-      </Typography>
-      <Typography variant="h5" sx={{ mb: 1, fontWeight: 600, color: 'text.primary' }}>
+      </div>
+      <h3 className="text-lg font-bold text-gray-900 mb-1">
         {title}
-      </Typography>
-      <Typography
-        variant="body2"
-        sx={{ mb: 3, color: 'text.secondary', maxWidth: 320 }}
-      >
-        {description}
-      </Typography>
-      {actionLabel && onAction && (
-        <Button variant="contained" onClick={onAction} size="large">
-          {actionLabel}
-        </Button>
+      </h3>
+      {description && (
+        <p className="text-sm text-gray-500 max-w-sm mb-6">
+          {description}
+        </p>
       )}
-    </Box>
+      {actionLabel && onAction && (
+        <button
+          onClick={onAction}
+          className="px-5 py-2.5 bg-primary hover:bg-primary-dark text-white text-sm font-semibold rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105 active:scale-95"
+          style={{ backgroundColor: '#6C5CE7' }} // Inline fallback for primary color
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
   );
 }

@@ -15,21 +15,36 @@ export function useAuth() {
     initialized.current = true;
 
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('Auth session error:', error.message);
+        clearSession();
+        return;
+      }
       setSession(session);
+    }).catch((err) => {
+      console.error('Unexpected auth error:', err);
+      clearSession();
     });
 
     // Listen for auth state changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        clearSession();
+      } else if (event === 'TOKEN_REFRESHED' && !session) {
+        // If token refresh failed, session might be null or invalid
+        clearSession();
+      } else {
+        setSession(session);
+      }
     });
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [setSession]);
+  }, [setSession, clearSession]);
 
   const signIn = useCallback(
     async (email: string, password: string) => {

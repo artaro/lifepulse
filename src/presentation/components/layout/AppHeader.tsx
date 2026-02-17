@@ -1,29 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  AppBar,
-  Toolbar,
-  Typography,
-  IconButton,
-  Box,
-  Avatar,
-  InputBase,
-  useMediaQuery,
-  useTheme,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  ListItemText,
-  Divider,
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import SearchIcon from '@mui/icons-material/Search';
-import NotificationsNoneIcon from '@mui/icons-material/NotificationsNone';
-import LogoutIcon from '@mui/icons-material/Logout';
-import PersonIcon from '@mui/icons-material/Person';
-import { SIDEBAR_WIDTH } from '@/lib/constants';
+import React, { useState, useRef, useEffect } from 'react';
+import { Menu, User, LogOut, Bell } from 'lucide-react';
 import { useAuth } from '@/presentation/hooks/useAuth';
+import { SIDEBAR_WIDTH } from '@/lib/constants';
 
 interface AppHeaderProps {
   onMenuClick: () => void;
@@ -31,153 +11,104 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({ onMenuClick, title }: AppHeaderProps) {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { user, signOut } = useAuth();
-  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const userInitials = user?.email
     ? user.email.substring(0, 2).toUpperCase()
     : '??';
 
-  const handleAvatarClick = (e: React.MouseEvent<HTMLElement>) => {
-    setAnchorEl(e.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleLogout = async () => {
-    handleClose();
+    setIsMenuOpen(false);
     await signOut();
   };
 
   return (
-    <AppBar
-      position="fixed"
-      elevation={0}
-      sx={{
-        width: isMobile ? '100%' : `calc(100% - ${SIDEBAR_WIDTH}px)`,
-        ml: isMobile ? 0 : `${SIDEBAR_WIDTH}px`,
-        backgroundColor: 'rgba(255, 255, 255, 0.85)',
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
+    <header 
+      className="fixed top-0 right-0 z-40 h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 transition-all duration-300"
+      style={{
+        width: '100%',
+        paddingLeft: '1rem', // Base padding
+        paddingRight: '1rem',
       }}
     >
-      <Toolbar sx={{ gap: 2 }}>
-        {isMobile && (
-          <IconButton edge="start" onClick={onMenuClick}>
-            <MenuIcon />
-          </IconButton>
-        )}
-
-        {title && (
-          <Typography variant="h5" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            {title}
-          </Typography>
-        )}
-
-        {/* Search bar */}
-        <Box
-          sx={{
-            flex: 1,
-            display: 'flex',
-            justifyContent: 'center',
-            maxWidth: 480,
-            mx: 'auto',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              backgroundColor: 'rgba(108, 92, 231, 0.04)',
-              borderRadius: 3,
-              px: 2,
-              py: 0.5,
-              width: '100%',
-              border: '1px solid transparent',
-              transition: 'all 0.2s',
-              '&:focus-within': {
-                borderColor: 'primary.light',
-                backgroundColor: 'background.paper',
-                boxShadow: '0px 2px 8px rgba(108, 92, 231, 0.08)',
-              },
-            }}
+      <div className="flex items-center justify-between h-full max-w-7xl mx-auto md:ml-[280px]">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onMenuClick}
+            className="p-2 -ml-2 text-gray-600 rounded-lg hover:bg-gray-100 md:hidden"
           >
-            <SearchIcon sx={{ color: 'text.secondary', mr: 1, fontSize: 20 }} />
-            <InputBase
-              placeholder="Search transactions..."
-              sx={{
-                flex: 1,
-                fontSize: '0.85rem',
-                fontFamily: 'Outfit',
-              }}
-            />
-          </Box>
-        </Box>
+            <Menu className="w-6 h-6" />
+          </button>
+
+          {title && (
+            <h1 className="text-xl font-bold text-gray-900">
+              {title}
+            </h1>
+          )}
+        </div>
 
         {/* Right section */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <IconButton size="small">
-            <NotificationsNoneIcon sx={{ color: 'text.secondary' }} />
-          </IconButton>
-          <Avatar
-            onClick={handleAvatarClick}
-            sx={{
-              width: 36,
-              height: 36,
-              background: 'linear-gradient(135deg, #6C5CE7, #A29BFE)',
-              fontSize: '0.9rem',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'transform 0.2s',
-              '&:hover': { transform: 'scale(1.08)' },
-            }}
-          >
-            {userInitials}
-          </Avatar>
+        <div className="flex items-center gap-2">
+          <button className="p-2 text-gray-500 rounded-lg hover:bg-gray-100 relative">
+            <Bell className="w-5 h-5" />
+            <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full ring-2 ring-white" />
+          </button>
+          
+          <div className="relative" ref={menuRef}>
+            <button 
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="flex items-center justify-center w-9 h-9 text-sm font-semibold text-white rounded-full bg-gradient-to-br from-indigo-500 to-purple-400 hover:scale-105 transition-transform cursor-pointer shadow-sm shadow-indigo-200"
+            >
+              {userInitials}
+            </button>
 
-          {/* Profile dropdown */}
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleClose}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
-            slotProps={{
-              paper: {
-                sx: {
-                  mt: 1,
-                  borderRadius: 3,
-                  minWidth: 200,
-                  boxShadow: '0px 8px 32px rgba(108, 92, 231, 0.12)',
-                },
-              },
-            }}
-          >
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                {user?.email || 'User'}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                LifePulse Account
-              </Typography>
-            </Box>
-            <Divider />
-            <MenuItem onClick={handleClose}>
-              <ListItemIcon><PersonIcon fontSize="small" /></ListItemIcon>
-              <ListItemText>Profile</ListItemText>
-            </MenuItem>
-            <MenuItem onClick={handleLogout}>
-              <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: 'error.main' }} /></ListItemIcon>
-              <ListItemText sx={{ color: 'error.main' }}>Logout</ListItemText>
-            </MenuItem>
-          </Menu>
-        </Box>
-      </Toolbar>
-    </AppBar>
+            {/* Profile dropdown */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-100 py-1 origin-top-right animate-in fade-in zoom-in-95 duration-200">
+                <div className="px-4 py-3 border-b border-gray-50">
+                  <p className="text-sm font-medium text-gray-900 truncate">
+                    {user?.email || 'User'}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    LifePulse Account
+                  </p>
+                </div>
+                
+                <div className="p-1">
+                  <button 
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <User className="w-4 h-4" />
+                    Profile
+                  </button>
+                  <button 
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </header>
   );
 }

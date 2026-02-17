@@ -1,23 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  IconButton,
-  Typography,
-  CircularProgress,
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import React, { useState, useEffect } from 'react';
+import { CreditCard, Landmark, X, DollarSign, Building2 } from 'lucide-react';
 import { CreateAccountInput, UpdateAccountInput, Account } from '@/domain/entities';
 import { AccountType } from '@/domain/enums/accountType';
 
@@ -44,8 +28,7 @@ export default function AccountForm({
   const [bankName, setBankName] = useState(initialData?.bankName || '');
   const [last4, setLast4] = useState(initialData?.accountNumberLast4 || '');
 
-  // Reset form when dialog opens with new data
-  React.useEffect(() => {
+  useEffect(() => {
     if (open) {
       setName(initialData?.name || '');
       setType(initialData?.type || AccountType.BANK);
@@ -67,84 +50,138 @@ export default function AccountForm({
     onSubmit(data);
   };
 
+  if (!open) return null;
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: 4 } }}
-    >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="h6" component="span" sx={{ fontWeight: 700 }}>
-          {isEdit ? 'Edit Account ✏️' : 'Add Account 🏦'}
-        </Typography>
-        <IconButton size="small" onClick={onClose}>
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
+      />
 
-      <Box component="form" onSubmit={handleSubmit}>
-        <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
-          <TextField
-            label="Account Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-            fullWidth
-            placeholder="e.g. KBank Savings"
-          />
-
-          <FormControl fullWidth>
-            <InputLabel>Account Type</InputLabel>
-            <Select
-              value={type}
-              onChange={(e) => setType(e.target.value as AccountType)}
-              label="Account Type"
-            >
-              <MenuItem value={AccountType.BANK}>🏦 Bank Account</MenuItem>
-              <MenuItem value={AccountType.CREDIT_CARD}>💳 Credit Card</MenuItem>
-            </Select>
-          </FormControl>
-
-          <TextField
-            label="Current Balance"
-            type="number"
-            value={balance}
-            onChange={(e) => setBalance(e.target.value)}
-            fullWidth
-            inputProps={{ step: '0.01' }}
-          />
-
-          <TextField
-            label="Bank Name (optional)"
-            value={bankName}
-            onChange={(e) => setBankName(e.target.value)}
-            fullWidth
-            placeholder="e.g. Kasikorn Bank"
-          />
-
-          <TextField
-            label="Last 4 digits (optional)"
-            value={last4}
-            onChange={(e) => setLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
-            fullWidth
-            placeholder="1234"
-            inputProps={{ maxLength: 4 }}
-          />
-        </DialogContent>
-
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button variant="outlined" onClick={onClose}>Cancel</Button>
-          <Button
-            type="submit"
-            variant="contained"
-            disabled={loading || !name.trim()}
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm animate-in zoom-in-95 duration-200 flex flex-col">
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-gray-900">
+            {isEdit ? 'Edit Account ✏️' : 'Add Account 🏦'}
+          </h2>
+          <button 
+            onClick={onClose}
+            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
           >
-            {loading ? <CircularProgress size={22} color="inherit" /> : isEdit ? 'Update' : 'Create'}
-          </Button>
-        </DialogActions>
-      </Box>
-    </Dialog>
+            <X size={20} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+           
+           {/* Account Name */}
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
+             <input 
+               type="text"
+               required
+               value={name}
+               onChange={(e) => setName(e.target.value)}
+               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-gray-900 placeholder-gray-400"
+               placeholder="e.g. KBank Savings" 
+             />
+           </div>
+
+           {/* Account Type */}
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">Account Type</label>
+            <div className="flex gap-2">
+                <button
+                    type="button"
+                    onClick={() => setType(AccountType.BANK)}
+                    className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold border transition-all ${
+                        type === AccountType.BANK
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500/20'
+                        : 'border-gray-200 hover:bg-gray-50 text-gray-600'
+                    }`}
+                >
+                    <Landmark size={18} /> Bank
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setType(AccountType.CREDIT_CARD)}
+                    className={`flex-1 py-2 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold border transition-all ${
+                        type === AccountType.CREDIT_CARD
+                        ? 'border-indigo-500 bg-indigo-50 text-indigo-700 ring-2 ring-indigo-500/20'
+                        : 'border-gray-200 hover:bg-gray-50 text-gray-600'
+                    }`}
+                >
+                    <CreditCard size={18} /> Credit Card
+                </button>
+            </div>
+           </div>
+
+           {/* Balance */}
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">Current Balance</label>
+             <div className="relative">
+               <DollarSign size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+               <input 
+                 type="number"
+                 step="0.01"
+                 value={balance}
+                 onChange={(e) => setBalance(e.target.value)}
+                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-gray-900 font-medium" 
+                 placeholder="0.00"
+               />
+             </div>
+           </div>
+
+           {/* Bank Name */}
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name (optional)</label>
+             <div className="relative">
+               <Building2 size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+               <input 
+                 type="text"
+                 value={bankName}
+                 onChange={(e) => setBankName(e.target.value)}
+                 className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-gray-900 placeholder-gray-400" 
+                 placeholder="e.g. Kasikorn Bank"
+               />
+             </div>
+           </div>
+
+           {/* Last 4 Digits */}
+           <div>
+             <label className="block text-sm font-medium text-gray-700 mb-1">Last 4 digits (optional)</label>
+             <input 
+               type="text"
+               maxLength={4}
+               value={last4}
+               onChange={(e) => setLast4(e.target.value.replace(/\D/g, '').slice(0, 4))}
+               className="w-full px-4 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-gray-900 placeholder-gray-400 tracking-widest" 
+               placeholder="1234"
+             />
+           </div>
+
+           {/* Actions */}
+           <div className="pt-4 flex justify-end gap-3">
+             <button 
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                disabled={loading}
+             >
+                Cancel
+             </button>
+             <button 
+                type="submit"
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                disabled={loading || !name.trim()}
+             >
+                {loading ? 'Saving...' : (isEdit ? 'Update' : 'Create')}
+             </button>
+           </div>
+        </form>
+      </div>
+    </div>
   );
 }

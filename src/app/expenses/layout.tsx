@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Box, Toolbar, CircularProgress, Typography } from '@mui/material';
 import { AppSidebar, AppHeader } from '@/presentation/components/layout';
-import { SIDEBAR_WIDTH } from '@/lib/constants';
 import TransactionFAB from '@/presentation/components/expenses/TransactionFAB';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
+import GlobalModals from '@/presentation/components/layout/GlobalModals';
 
 export default function DashboardLayout({
   children,
@@ -18,58 +18,42 @@ export default function DashboardLayout({
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  // Track client-side mount to prevent SSR hydration mismatches
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Redirect to login if not authenticated (in useEffect to avoid setState during render)
   useEffect(() => {
     if (mounted && !loading && !user) {
       router.push('/login');
     }
   }, [mounted, loading, user, router]);
 
-  // Show loading while checking auth, waiting for mount, or waiting for redirect
   if (!mounted || loading || !user) {
     return (
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 2,
-          background: 'linear-gradient(135deg, #F8F7FF 0%, #EDE8FF 50%, #F0EEFF 100%)',
-        }}
-      >
-        <CircularProgress sx={{ color: '#6C5CE7' }} />
-        <Typography variant="body2" color="text.secondary">
-          Loading...
-        </Typography>
-      </Box>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-indigo-50 via-purple-50 to-indigo-50">
+        <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        <p className="text-sm text-gray-500 font-medium">Loading...</p>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh', backgroundColor: 'background.default' }}>
+    <div className="flex min-h-screen bg-gray-50">
       <AppSidebar open={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          width: { xs: '100%', md: `calc(100% - ${SIDEBAR_WIDTH}px)` },
-          ml: { xs: 0, md: `${SIDEBAR_WIDTH}px` },
-        }}
+      
+      <main 
+        className="flex-1 transition-all duration-300 ease-in-out w-full md:w-[calc(100%-280px)] md:ml-[280px]"
       >
         <AppHeader onMenuClick={() => setSidebarOpen(true)} />
-        <Toolbar /> {/* Spacer for fixed AppBar */}
-        <Box sx={{ p: { xs: 2, sm: 3 }, maxWidth: 1200, mx: 'auto' }}>
+        <div className="h-16" /> {/* Spacer for fixed header */}
+        
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {children}
-        </Box>
-      </Box>
+        </div>
+      </main>
+      
       <TransactionFAB />
-    </Box>
+      <GlobalModals />
+    </div>
   );
 }

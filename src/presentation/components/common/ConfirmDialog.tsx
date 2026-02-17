@@ -1,59 +1,60 @@
 'use client';
 
 import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-} from '@mui/material';
 
 interface ConfirmDialogProps {
   open: boolean;
   title: string;
   message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  confirmColor?: 'error' | 'primary' | 'secondary';
   onConfirm: () => void;
   onCancel: () => void;
-  loading?: boolean;
+  confirmLabel?: string;
+  cancelLabel?: string;
 }
 
 export default function ConfirmDialog({
   open,
   title,
   message,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
-  confirmColor = 'error',
   onConfirm,
   onCancel,
-  loading = false,
+  confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
 }: ConfirmDialogProps) {
+  if (!open) return null;
+
   return (
-    <Dialog open={open} onClose={onCancel} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 600, pb: 1 }}>{title}</DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" color="text.secondary">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Overlay */}
+      <div 
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm animate-fade-in"
+        onClick={onCancel}
+      />
+
+      {/* Dialog */}
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 animate-in zoom-in-95 duration-200">
+        <h3 className="text-lg font-bold text-gray-900 mb-2">
+          {title}
+        </h3>
+        <p className="text-gray-600 mb-6 text-sm leading-relaxed">
           {message}
-        </Typography>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onCancel} disabled={loading} variant="outlined">
-          {cancelLabel}
-        </Button>
-        <Button
-          onClick={onConfirm}
-          color={confirmColor}
-          variant="contained"
-          disabled={loading}
-        >
-          {loading ? 'Working...' : confirmLabel}
-        </Button>
-      </DialogActions>
-    </Dialog>
+        </p>
+        
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+          >
+            {cancelLabel}
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-lg transition-colors shadow-sm shadow-red-200"
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -1,37 +1,23 @@
 'use client';
 
-import React, { useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Box,
-  InputAdornment,
-} from '@mui/material';
+import React, { useState, useEffect } from 'react';
+import { 
+  X, 
+  Calendar as CalendarIcon, 
+  FileText, 
+  DollarSign, 
+  ChevronDown 
+} from 'lucide-react';
 import { TransactionType } from '@/domain/enums';
-import { CreateTransactionInput, UpdateTransactionInput, Category, Account } from '@/domain/entities';
+import { Account, Category } from '@/domain/entities';
 
 interface TransactionFormProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateTransactionInput | UpdateTransactionInput) => void;
+  onSubmit: (data: any) => void;
   accounts: Account[];
   categories: Category[];
-  initialData?: {
-    accountId?: string;
-    categoryId?: string;
-    type?: TransactionType;
-    amount?: number;
-    description?: string;
-    transactionDate?: string;
-  };
+  initialData?: any;
   loading?: boolean;
   isEdit?: boolean;
 }
@@ -47,145 +33,221 @@ export default function TransactionForm({
   isEdit = false,
 }: TransactionFormProps) {
   const [formData, setFormData] = useState({
-    accountId: initialData?.accountId || '',
-    categoryId: initialData?.categoryId || '',
-    type: initialData?.type || TransactionType.EXPENSE,
-    amount: initialData?.amount || 0,
-    description: initialData?.description || '',
-    transactionDate: initialData?.transactionDate || new Date().toISOString().split('T')[0],
+    description: '',
+    amount: '',
+    type: TransactionType.EXPENSE,
+    accountId: '',
+    categoryId: '',
+    transactionDate: new Date().toISOString().split('T')[0],
   });
 
-  const handleChange = (field: string, value: string | number) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
-  };
+  useEffect(() => {
+    if (open) {
+      if (initialData) {
+        setFormData({
+            description: initialData.description || '',
+            amount: initialData.amount?.toString() || '',
+            type: initialData.type || TransactionType.EXPENSE,
+            accountId: initialData.accountId || '',
+            categoryId: initialData.categoryId || '',
+            transactionDate: initialData.transactionDate || new Date().toISOString().split('T')[0],
+        });
+      } else {
+        setFormData({
+            description: '',
+            amount: '',
+            type: TransactionType.EXPENSE,
+            accountId: accounts.length > 0 ? accounts[0].id : '',
+            categoryId: '',
+            transactionDate: new Date().toISOString().split('T')[0],
+        });
+      }
+    }
+  }, [open, initialData, accounts]);
 
-  const handleSubmit = () => {
+  if (!open) return null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     onSubmit({
-      ...formData,
-      amount: Number(formData.amount),
+        ...formData,
+        amount: Number(formData.amount),
     });
   };
 
-  const isValid =
-    formData.accountId &&
-    formData.amount > 0 &&
-    formData.transactionDate;
+  const filteredCategories = categories.filter(c => c.type === formData.type);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle sx={{ fontWeight: 600, pb: 1 }}>
-        {isEdit ? 'Edit Transaction ✏️' : 'New Transaction 💸'}
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
-          {/* Type selector */}
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {[TransactionType.EXPENSE, TransactionType.INCOME].map((type) => (
-              <Button
-                key={type}
-                variant={formData.type === type ? 'contained' : 'outlined'}
-                onClick={() => handleChange('type', type)}
-                sx={{
-                  flex: 1,
-                  py: 1.2,
-                  ...(type === TransactionType.EXPENSE
-                    ? {
-                        ...(formData.type === type
-                          ? { background: 'linear-gradient(135deg, #FF7675, #D63031)' }
-                          : {}),
-                      }
-                    : {
-                        ...(formData.type === type
-                          ? { background: 'linear-gradient(135deg, #00CEC9, #00A8A4)' }
-                          : {}),
-                      }),
-                }}
-              >
-                {type === TransactionType.EXPENSE ? '💸 Expense' : '💰 Income'}
-              </Button>
-            ))}
-          </Box>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <div 
+        className="fixed inset-0 bg-black/20 backdrop-blur-sm animate-fade-in"
+        onClick={onClose}
+      />
+
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-md animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+        {/* Header */}
+        <div className="flex items-center justify-between p-5 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-gray-900">
+            {isEdit ? 'Edit Transaction ✏️' : 'New Transaction 💸'}
+          </h2>
+          <button 
+            onClick={onClose}
+            className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-lg transition-colors"
+          >
+            <X size={20} />
+          </button>
+        </div>
+
+        {/* content */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5 overflow-y-auto">
+          {/* Type Toggle */}
+          <div className="flex bg-gray-100 p-1 rounded-xl">
+            <button
+                type="button"
+                onClick={() => setFormData({...formData, type: TransactionType.EXPENSE, categoryId: ''})}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                    formData.type === TransactionType.EXPENSE
+                    ? 'bg-white text-red-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+                Expense
+            </button>
+            <button
+                type="button"
+                onClick={() => setFormData({...formData, type: TransactionType.INCOME, categoryId: ''})}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                    formData.type === TransactionType.INCOME
+                    ? 'bg-white text-teal-600 shadow-sm' 
+                    : 'text-gray-500 hover:text-gray-700'
+                }`}
+            >
+                Income
+            </button>
+          </div>
 
           {/* Amount */}
-          <TextField
-            label="Amount"
-            type="number"
-            value={formData.amount || ''}
-            onChange={(e) => handleChange('amount', e.target.value)}
-            fullWidth
-            InputProps={{
-              startAdornment: <InputAdornment position="start">฿</InputAdornment>,
-            }}
-            inputProps={{ min: 0, step: 0.01 }}
-          />
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 ml-1">Amount</label>
+            <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">
+                    <DollarSign size={18} />
+                </div>
+                <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-lg font-bold text-gray-900 placeholder-gray-300"
+                    required
+                    autoFocus={!isEdit}
+                />
+            </div>
+          </div>
 
           {/* Description */}
-          <TextField
-            label="Description"
-            value={formData.description}
-            onChange={(e) => handleChange('description', e.target.value)}
-            fullWidth
-            placeholder="e.g. Lunch at CentralWorld 🍜"
-          />
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 ml-1">Description</label>
+            <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <FileText size={18} />
+                </div>
+                <input
+                    type="text"
+                    placeholder="What was this for?"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-gray-900"
+                    required
+                />
+            </div>
+          </div>
 
-          {/* Date */}
-          <TextField
-            label="Date"
-            type="date"
-            value={formData.transactionDate}
-            onChange={(e) => handleChange('transactionDate', e.target.value)}
-            fullWidth
-            InputLabelProps={{ shrink: true }}
-          />
+          <div className="grid grid-cols-2 gap-4">
+              {/* Category */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 ml-1">Category</label>
+                <div className="relative">
+                    <select
+                        value={formData.categoryId}
+                        onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
+                        className="w-full pl-3 pr-8 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none appearance-none bg-white font-medium text-sm truncate"
+                        required
+                    >
+                        <option value="" disabled>Select...</option>
+                        {filteredCategories.map(c => (
+                            <option key={c.id} value={c.id}>
+                                {c.icon} {c.name}
+                            </option>
+                        ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={16} />
+                </div>
+              </div>
+
+              {/* Date */}
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 ml-1">Date</label>
+                <div className="relative">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                        <CalendarIcon size={16} />
+                    </div>
+                    <input
+                        type="date"
+                        value={formData.transactionDate}
+                        onChange={(e) => setFormData({...formData, transactionDate: e.target.value})}
+                        className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none font-medium text-sm"
+                        required
+                    />
+                </div>
+              </div>
+          </div>
 
           {/* Account */}
-          <FormControl fullWidth>
-            <InputLabel>Account</InputLabel>
-            <Select
-              value={formData.accountId}
-              onChange={(e) => handleChange('accountId', e.target.value)}
-              label="Account"
-            >
-              {accounts.map((acc) => (
-                <MenuItem key={acc.id} value={acc.id}>
-                  {acc.type === 'bank' ? '🏦' : '💳'} {acc.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <div>
+            <label className="block text-xs font-bold text-gray-500 uppercase mb-1.5 ml-1">Account</label>
+            <div className="relative">
+                <select
+                    value={formData.accountId}
+                    onChange={(e) => setFormData({...formData, accountId: e.target.value})}
+                    className="w-full pl-3 pr-8 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none appearance-none bg-white font-medium"
+                    required
+                >
+                    <option value="" disabled>Select Account</option>
+                    {accounts.map(a => (
+                        <option key={a.id} value={a.id}>
+                            {a.type === 'bank' ? '🏦' : '💳'} {a.name}
+                        </option>
+                    ))}
+                </select>
+                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" size={20} />
+            </div>
+          </div>
 
-          {/* Category */}
-          <FormControl fullWidth>
-            <InputLabel>Category</InputLabel>
-            <Select
-              value={formData.categoryId}
-              onChange={(e) => handleChange('categoryId', e.target.value)}
-              label="Category"
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+            <button
+                type="button"
+                onClick={onClose}
+                className="px-5 py-2.5 text-sm font-semibold text-gray-600 hover:bg-gray-100 rounded-xl transition-colors"
+                disabled={loading}
             >
-              <MenuItem value="">
-                <em>No category</em>
-              </MenuItem>
-              {categories.map((cat) => (
-                <MenuItem key={cat.id} value={cat.id}>
-                  {cat.icon} {cat.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-        </Box>
-      </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2.5 }}>
-        <Button onClick={onClose} variant="outlined" disabled={loading}>
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!isValid || loading}
-        >
-          {loading ? 'Saving...' : isEdit ? 'Update' : 'Add Transaction'}
-        </Button>
-      </DialogActions>
-    </Dialog>
+                Cancel
+            </button>
+            <button
+                type="submit"
+                disabled={loading || !formData.amount || !formData.description || !formData.accountId || !formData.categoryId}
+                className="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+                {loading ? 'Saving...' : 'Save Transaction'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }

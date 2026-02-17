@@ -1,47 +1,48 @@
 'use client';
 
 import React from 'react';
-import { Chip, SxProps, Theme } from '@mui/material';
+import { Category } from '@/domain/entities';
 
 interface CategoryChipProps {
-  name: string;
-  icon?: string;
-  color?: string;
-  size?: 'small' | 'medium';
-  onClick?: () => void;
+  category?: Category;
   selected?: boolean;
-  sx?: SxProps<Theme>;
+  onClick?: () => void;
+  onDelete?: () => void;
+  compact?: boolean;
 }
 
 export default function CategoryChip({
-  name,
-  icon = '📦',
-  color = '#6C5CE7',
-  size = 'small',
+  category,
+  selected,
   onClick,
-  selected = false,
-  sx,
+  onDelete,
+  compact = false,
 }: CategoryChipProps) {
+  if (!category) return null;
+
   return (
-    <Chip
-      label={`${icon} ${name}`}
-      size={size}
+    <div
       onClick={onClick}
-      sx={{
-        backgroundColor: selected ? color : `${color}15`,
-        color: selected ? '#fff' : color,
-        fontWeight: 500,
-        border: `1px solid ${color}30`,
-        cursor: onClick ? 'pointer' : 'default',
-        transition: 'all 0.2s ease',
-        '&:hover': onClick
-          ? {
-              backgroundColor: selected ? color : `${color}25`,
-              transform: 'scale(1.02)',
-            }
-          : {},
-        ...sx,
+      className={`
+        inline-flex items-center gap-1.5 rounded-full transition-all duration-200 cursor-pointer border
+        ${compact ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm'}
+        ${
+          selected
+            ? 'bg-opacity-15 border-transparent shadow-sm'
+            : 'bg-gray-100 border-transparent text-gray-700 hover:bg-gray-200'
+        }
+      `}
+      style={{
+        backgroundColor: selected ? `${category.color}20` : undefined, // 20 = 12% opacity hex
+        color: selected ? category.color : undefined,
       }}
-    />
+    >
+      <span className={compact ? 'text-sm' : 'text-base'}>
+        {category.icon}
+      </span>
+      <span className="font-medium">
+        {category.name}
+      </span>
+    </div>
   );
 }

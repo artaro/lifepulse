@@ -15,6 +15,7 @@ export interface Transaction {
   source: StatementSource;
   referenceId: string | null;
   createdAt: string;
+  updatedAt: string;
   // Joined relations (optional, populated when fetched with joins)
   category?: Category;
   account?: Account;

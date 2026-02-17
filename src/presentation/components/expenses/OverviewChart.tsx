@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Box, Typography, Card, CardContent } from '@mui/material';
 import {
   BarChart,
   Bar,
@@ -64,46 +63,52 @@ export default function OverviewChart({ transactions, title = 'Financial Overvie
   }, [data]);
 
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-          <Box>
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">
               {title}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Avg. Exp: {(averages.expense / 1000).toFixed(1)}k / mo
-            </Typography>
-          </Box>
-        </Box>
+            </h3>
+            <p className="text-xs text-gray-500 font-medium mt-0.5">
+              Avg. Exp: <span className="text-gray-700">{(averages.expense / 1000).toFixed(1)}k / mo</span>
+            </p>
+          </div>
+      </div>
 
-        <Box sx={{ flexGrow: 1, minHeight: 300 }}>
+      <div className="flex-grow min-h-[300px]">
           <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={data} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E8E5F5" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fontSize: 12, fontFamily: 'Outfit' }}
-                axisLine={{ stroke: '#E8E5F5' }}
+                tick={{ fontSize: 12, fontFamily: 'inherit', fill: '#9CA3AF' }}
+                axisLine={{ stroke: '#F3F4F6' }}
                 tickLine={false}
+                dy={10}
               />
               <YAxis
-                tick={{ fontSize: 12, fontFamily: 'Outfit' }}
+                tick={{ fontSize: 12, fontFamily: 'inherit', fill: '#9CA3AF' }}
                 axisLine={false}
                 tickLine={false}
                 tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
+                dx={-10}
               />
               <Tooltip
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 formatter={(value: any) => formatCurrency(Number(value))}
+                cursor={{ fill: '#F9FAFB' }}
                 contentStyle={{
-                  borderRadius: 16,
+                  borderRadius: '1rem',
                   border: 'none',
-                  boxShadow: '0px 4px 16px rgba(0,0,0,0.1)',
-                  fontFamily: 'Outfit',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                  fontFamily: 'inherit',
+                  padding: '12px',
                 }}
               />
-              <Legend wrapperStyle={{ fontSize: '0.85rem' }} />
+              <Legend 
+                wrapperStyle={{ fontSize: '0.875rem', paddingTop: '20px' }} 
+                iconType="circle"
+              />
               <Bar
                 dataKey="income"
                 name="💰 Income"
@@ -120,8 +125,7 @@ export default function OverviewChart({ transactions, title = 'Financial Overvie
               />
             </BarChart>
           </ResponsiveContainer>
-        </Box>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

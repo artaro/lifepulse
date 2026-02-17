@@ -1,25 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Button,
-  TextField,
-  Card,
-  CardContent,
-  Tab,
-  Tabs,
-  Alert,
-  CircularProgress,
-  InputAdornment,
-  IconButton,
-} from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '@/presentation/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { APP_NAME } from '@/lib/constants';
+import { Eye, EyeOff, Check, X, Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [tab, setTab] = useState(0); // 0 = Login, 1 = Sign Up
@@ -42,7 +27,7 @@ export default function LoginPage() {
 
     try {
       if (tab === 0) {
-        // Login — signIn updates the store immediately before we navigate
+        // Login
         await signIn(email, password);
         router.push('/expenses');
       } else {
@@ -69,155 +54,129 @@ export default function LoginPage() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #F8F7FF 0%, #EDE8FF 50%, #F0EEFF 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        p: 2,
-      }}
-    >
-      <Box sx={{ width: '100%', maxWidth: 440 }}>
+    <div className="min-h-screen bg-gradient-to-br from-[#F8F7FF] via-[#EDE8FF] to-[#F0EEFF] flex items-center justify-center p-4">
+      <div className="w-full max-w-sm">
         {/* Logo */}
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
-          <Box
-            sx={{
-              width: 56,
-              height: 56,
-              borderRadius: '16px',
-              background: 'linear-gradient(135deg, #6C5CE7, #A29BFE)',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1.6rem',
-              mb: 2,
-            }}
-          >
+        <div className="text-center mb-8">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#6C5CE7] to-[#A29BFE] inline-flex items-center justify-center text-3xl shadow-xl shadow-indigo-200 mb-4 animate-bounce-slow">
             💜
-          </Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, mb: 0.5 }}>
+          </div>
+          <h1 className="text-3xl font-extrabold text-gray-900 mb-1 tracking-tight">
             {APP_NAME}
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
+          </h1>
+          <p className="text-gray-500 font-medium">
             Your money, your rules ✨
-          </Typography>
-        </Box>
+          </p>
+        </div>
 
-        <Card
-          sx={{
-            borderRadius: 4,
-            boxShadow: '0px 8px 40px rgba(108, 92, 231, 0.1)',
-          }}
-        >
-          <CardContent sx={{ p: 4 }}>
-            <Tabs
-              value={tab}
-              onChange={(_, v) => {
-                setTab(v);
-                setError(null);
-                setSuccess(null);
-              }}
-              variant="fullWidth"
-              sx={{
-                mb: 3,
-                '& .MuiTab-root': {
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  textTransform: 'none',
-                },
-              }}
-            >
-              <Tab label="Log In" />
-              <Tab label="Sign Up" />
-            </Tabs>
+        <div className="bg-white rounded-3xl shadow-xl shadow-indigo-100 p-8 border border-white/50 backdrop-blur-xl">
+          {/* Tabs */}
+          <div className="flex bg-gray-50 p-1 rounded-xl mb-6">
+             <button
+                type="button"
+                onClick={() => { setTab(0); setError(null); setSuccess(null); }}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                   tab === 0 
+                   ? 'bg-white text-gray-900 shadow-sm' 
+                   : 'text-gray-500 hover:text-gray-700'
+                }`}
+             >
+               Log In
+             </button>
+             <button
+                type="button"
+                onClick={() => { setTab(1); setError(null); setSuccess(null); }}
+                className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
+                   tab === 1 
+                   ? 'bg-white text-gray-900 shadow-sm' 
+                   : 'text-gray-500 hover:text-gray-700'
+                }`}
+             >
+               Sign Up
+             </button>
+          </div>
 
-            {error && (
-              <Alert severity="error" sx={{ mb: 2, borderRadius: 3 }} onClose={() => setError(null)}>
-                {error}
-              </Alert>
-            )}
+          {error && (
+            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3 text-red-700 text-sm font-medium animate-in slide-in-from-top-2">
+              <X size={18} className="mt-0.5 flex-shrink-0" />
+              <span>{error}</span>
+            </div>
+          )}
 
-            {success && (
-              <Alert severity="success" sx={{ mb: 2, borderRadius: 3 }} onClose={() => setSuccess(null)}>
-                {success}
-              </Alert>
-            )}
+          {success && (
+            <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-100 flex items-start gap-3 text-green-700 text-sm font-medium animate-in slide-in-from-top-2">
+              <Check size={18} className="mt-0.5 flex-shrink-0" />
+              <span>{success}</span>
+            </div>
+          )}
 
-            <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-              <TextField
-                label="Email"
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Email</label>
+              <input
                 type="email"
+                required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                fullWidth
-                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-gray-900 font-medium bg-gray-50/50 focus:bg-white transition-all placeholder-gray-400"
                 placeholder="you@example.com"
-                autoComplete="email"
               />
+            </div>
 
-              <TextField
-                label="Password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                fullWidth
-                required
-                placeholder="••••••••"
-                autoComplete={tab === 0 ? 'current-password' : 'new-password'}
-                InputProps={{
-                  endAdornment: (
-                    <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowPassword(!showPassword)} edge="end">
-                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                      </IconButton>
-                    </InputAdornment>
-                  ),
-                }}
-              />
+            <div>
+               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Password</label>
+               <div className="relative">
+                 <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-gray-900 font-medium bg-gray-50/50 focus:bg-white transition-all placeholder-gray-400"
+                    placeholder="••••••••"
+                 />
+                 <button 
+                   type="button"
+                   onClick={() => setShowPassword(!showPassword)}
+                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                 >
+                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                 </button>
+               </div>
+            </div>
 
-              {tab === 1 && (
-                <TextField
-                  label="Confirm Password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  fullWidth
-                  required
-                  placeholder="••••••••"
-                  autoComplete="new-password"
-                />
-              )}
+            {tab === 1 && (
+               <div className="animate-in slide-in-from-top-2">
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1.5 ml-1">Confirm Password</label>
+                  <input
+                      type={showPassword ? 'text' : 'password'}
+                      required
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-none text-gray-900 font-medium bg-gray-50/50 focus:bg-white transition-all placeholder-gray-400"
+                      placeholder="••••••••"
+                  />
+               </div>
+            )}
 
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={loading}
-                sx={{
-                  py: 1.5,
-                  mt: 1,
-                  fontSize: '1rem',
-                  fontWeight: 600,
-                }}
-              >
-                {loading ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : tab === 0 ? (
-                  'Log In'
-                ) : (
-                  'Create Account'
-                )}
-              </Button>
-            </Box>
-          </CardContent>
-        </Card>
-
-        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mt: 3 }}>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl hover:-translate-y-0.5 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mt-4"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={20} className="animate-spin" /> 
+                  Please wait...
+                </>
+              ) : tab === 0 ? 'Log In' : 'Create Account'}
+            </button>
+          </form>
+        </div>
+        
+        <p className="text-center text-xs font-semibold text-gray-400 mt-6">
           Built with 💜 by {APP_NAME} Team
-        </Typography>
-      </Box>
-    </Box>
+        </p>
+      </div>
+    </div>
   );
 }

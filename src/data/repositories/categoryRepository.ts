@@ -1,5 +1,6 @@
 import { supabase } from '@/data/datasources/supabase';
 import { Category, CreateCategoryInput, UpdateCategoryInput } from '@/domain/entities';
+import { DEFAULT_CATEGORIES } from '@/data/defaults/defaultCategories';
 
 function toCamelCase<T>(obj: Record<string, unknown>): T {
   const result: Record<string, unknown> = {};
@@ -25,10 +26,26 @@ export const categoryRepository = {
       .from('categories')
       .select('*')
       .eq('user_id', userId)
+      .order('is_pinned', { ascending: false })
+      .order('use_count', { ascending: false })
       .order('name', { ascending: true });
 
     if (error) throw new Error(error.message);
-    return (data || []).map((row) => toCamelCase<Category>(row as Record<string, unknown>));
+
+    const userCategories = (data || []).map((row) => toCamelCase<Category>(row as Record<string, unknown>));
+
+    // Merge hardcoded system defaults (always first)
+    const systemCategories: Category[] = DEFAULT_CATEGORIES.map(def => ({
+      ...def,
+      userId: '',
+      isDefault: true,
+      isPinned: false,
+      useCount: 0,
+      createdAt: '',
+    }));
+
+    // Final order: system → pinned → frequent → alphabetical
+    return [...systemCategories, ...userCategories];
   },
 
   async getById(id: string): Promise<Category | null> {
@@ -75,5 +92,35 @@ export const categoryRepository = {
       .eq('id', id);
 
     if (error) throw new Error(error.message);
+  },
+
+  async togglePin(id: string, isPinned: boolean): Promise<void> {
+    const { error } = await supabase
+      .from('categories')
+      .update({ is_pinned: isPinned })
+      .eq('id', id);
+
+    if (error) throw new Error(error.message);
+  },
+
+  async incrementUseCount(id: string): Promise<void> {
+    // Use rpc or raw update
+    const { error } = await supabase.rpc('increment_category_use_count', { category_id: id });
+
+    // Fallback: if RPC doesn't exist, do manual increment
+    if (error) {
+      const { data } = await supabase
+        .from('categories')
+        .select('use_count')
+        .eq('id', id)
+        .single();
+
+      if (data) {
+        await supabase
+          .from('categories')
+          .update({ use_count: ((data as Record<string, unknown>).use_count as number || 0) + 1 })
+          .eq('id', id);
+      }
+    }
   },
 };

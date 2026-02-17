@@ -1,110 +1,57 @@
 'use client';
 
 import React from 'react';
-import { Card, CardContent, Typography, Box, SxProps, Theme } from '@mui/material';
 
 interface StatCardProps {
   title: string;
   value: string;
   icon: React.ReactNode;
+  gradient: string;
   trend?: {
     value: string;
     positive: boolean;
   };
-  gradient?: string;
-  sx?: SxProps<Theme>;
 }
 
-export default function StatCard({ title, value, icon, trend, gradient, sx }: StatCardProps) {
+export default function StatCard({
+  title,
+  value,
+  icon,
+  gradient,
+  trend,
+}: StatCardProps) {
   return (
-    <Card
-      sx={{
-        position: 'relative',
-        overflow: 'hidden',
-        background: gradient || 'linear-gradient(135deg, #6C5CE7 0%, #A29BFE 100%)',
-        color: '#fff',
-        transition: 'all 0.3s ease',
-        '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0px 12px 40px rgba(108, 92, 231, 0.25)',
-        },
-        ...sx,
-      }}
-    >
-      <CardContent sx={{ position: 'relative', zIndex: 1, p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Typography
-            variant="body2"
-            sx={{ opacity: 0.85, fontWeight: 500, fontSize: '0.85rem' }}
-          >
+    <div className="relative overflow-hidden rounded-3xl p-6 bg-white shadow-sm border border-gray-100 transition-transform hover:-translate-y-1 hover:shadow-lg duration-300">
+      <div className="flex justify-between items-start mb-4">
+        <div>
+          <p className="text-sm font-medium text-gray-500 mb-1">
             {title}
-          </Typography>
-          <Box
-            sx={{
-              width: 44,
-              height: 44,
-              borderRadius: '14px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              backdropFilter: 'blur(10px)',
-            }}
-          >
-            {icon}
-          </Box>
-        </Box>
+          </p>
+          <h3 className="text-2xl font-bold text-gray-900 tracking-tight">
+            {value}
+          </h3>
+        </div>
+        <div 
+          className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shadow-lg"
+          style={{ background: gradient }}
+        >
+          {icon}
+        </div>
+      </div>
 
-        <Typography variant="h4" sx={{ fontWeight: 700, mb: 0.5 }}>
-          {value}
-        </Typography>
-
-        {trend && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                backgroundColor: trend.positive
-                  ? 'rgba(85, 239, 196, 0.3)'
-                  : 'rgba(255, 118, 117, 0.3)',
-                px: 1,
-                py: 0.25,
-                borderRadius: '8px',
-                fontWeight: 600,
-              }}
-            >
-              {trend.positive ? '↑' : '↓'} {trend.value}
-            </Typography>
-            <Typography variant="caption" sx={{ opacity: 0.7 }}>
-              vs last month
-            </Typography>
-          </Box>
-        )}
-      </CardContent>
-
-      {/* Decorative circle */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: -20,
-          right: -20,
-          width: 120,
-          height: 120,
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255, 255, 255, 0.08)',
-        }}
-      />
-      <Box
-        sx={{
-          position: 'absolute',
-          bottom: -30,
-          left: -30,
-          width: 80,
-          height: 80,
-          borderRadius: '50%',
-          backgroundColor: 'rgba(255, 255, 255, 0.05)',
-        }}
-      />
-    </Card>
+      {trend && (
+        <div className="flex items-center gap-2">
+          {trend.positive ? (
+            <div className="flex items-center text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-lg">
+              ↗ {trend.value}
+            </div>
+          ) : (
+            <div className="flex items-center text-xs font-bold text-rose-600 bg-rose-50 px-2 py-1 rounded-lg">
+              ↘ {trend.value}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

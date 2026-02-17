@@ -32,15 +32,15 @@ export function formatNumber(
  * Format a date string to a user-friendly format.
  */
 export function formatDate(
-  dateStr: string,
-  locale: string = 'en-US',
+  dateStr: string | Date,
+  locale: string = 'en-GB',
   options?: Intl.DateTimeFormatOptions
 ): string {
-  const date = new Date(dateStr);
+  const date = typeof dateStr === 'string' ? new Date(dateStr) : dateStr;
   return date.toLocaleDateString(locale, {
-    year: 'numeric',
-    month: 'short',
     day: 'numeric',
+    month: 'short',
+    year: 'numeric',
     ...options,
   });
 }

@@ -1,163 +1,86 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Button, Container, Grid } from '@mui/material';
 import Link from 'next/link';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import { ArrowRight } from 'lucide-react';
 
 export default function HomePage() {
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #F8F7FF 0%, #EDE8FF 50%, #F0EEFF 100%)',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="min-h-screen bg-gradient-to-br from-[#F8F7FF] via-[#EDE8FF] to-[#F0EEFF] flex flex-col">
       {/* Header */}
-      <Box
-        sx={{
-          py: 2,
-          px: 4,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Box
-            sx={{
-              width: 36,
-              height: 36,
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #6C5CE7, #A29BFE)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontSize: '1rem',
-            }}
-          >
+      <header className="px-4 py-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-[#6C5CE7] to-[#A29BFE] flex items-center justify-center text-lg shadow-lg shadow-indigo-200">
             💜
-          </Box>
-          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+          </div>
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
             LifePulse
-          </Typography>
-        </Box>
-        <Button
-          component={Link}
-          href="/expenses"
-          variant="contained"
-          size="small"
-          endIcon={<ArrowForwardIcon />}
+          </h1>
+        </div>
+        <Link 
+          href="/expenses" 
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-lg shadow-indigo-200 hover:shadow-xl transition-all active:scale-95 flex items-center gap-2"
         >
-          Open App
-        </Button>
-      </Box>
+          Open App <ArrowRight size={16} />
+        </Link>
+      </header>
 
       {/* Hero */}
-      <Container
-        maxWidth="md"
-        sx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'center',
-          py: 8,
-        }}
-      >
-        <Typography
-          sx={{
-            fontSize: { xs: '3rem', md: '4.5rem' },
-            mb: 2,
-            lineHeight: 1,
-          }}
-        >
+      <main className="flex-1 flex flex-col items-center justify-center px-4 text-center py-12 sm:py-20 lg:py-32">
+        <div className="text-6xl sm:text-7xl lg:text-8xl mb-6 hover:animate-bounce cursor-default transition-all">
           💸
-        </Typography>
-        <Typography
-          variant="h1"
-          sx={{
-            fontSize: { xs: '2rem', md: '3.5rem' },
-            fontWeight: 800,
-            background: 'linear-gradient(135deg, #6C5CE7, #FD79A8)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            mb: 2,
-          }}
-        >
-          Your Money, Your Rules.
-        </Typography>
-        <Typography
-          variant="h5"
-          sx={{
-            color: 'text.secondary',
-            maxWidth: 520,
-            mb: 4,
-            fontSize: { xs: '1rem', md: '1.2rem' },
-            lineHeight: 1.6,
-          }}
-        >
+        </div>
+        
+        <h1 className="text-4xl sm:text-6xl font-extrabold mb-4 tracking-tight">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6C5CE7] to-[#FD79A8] drop-shadow-sm">
+            Your Money, Your Rules.
+          </span>
+        </h1>
+        
+        <p className="max-w-xl mx-auto text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed">
           Track expenses, import bank statements, and crush your budget goals —
           all in one beautiful app designed for the way you live. ✨
-        </Typography>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
-          <Button
-            component={Link}
+        </p>
+        
+        <div className="flex flex-wrap gap-4 justify-center">
+          <Link
             href="/expenses"
-            variant="contained"
-            size="large"
-            endIcon={<ArrowForwardIcon />}
-            sx={{ px: 4, py: 1.5 }}
+            className="px-8 py-3.5 bg-indigo-600 hover:bg-indigo-700 text-white text-lg font-bold rounded-2xl shadow-xl shadow-indigo-200 hover:shadow-2xl hover:-translate-y-1 transition-all flex items-center gap-2"
           >
-            Get Started Free
-          </Button>
-        </Box>
+            Get Started Free <ArrowRight size={20} />
+          </Link>
+        </div>
 
         {/* Feature cards */}
-        <Grid container spacing={3} sx={{ mt: 8 }}>
+        <div className="mt-16 sm:mt-24 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto px-4 w-full">
           {[
             { emoji: '📊', title: 'Expense Tracking', desc: 'See where every baht goes' },
             { emoji: '📄', title: 'Import Statements', desc: 'Upload CSV from your bank' },
             { emoji: '🎯', title: 'Budget Goals', desc: 'Set targets & stay on track' },
             { emoji: '📈', title: 'Smart Charts', desc: 'Beautiful spending breakdowns' },
           ].map((feature) => (
-            <Grid size={{ xs: 6, md: 3 }} key={feature.title}>
-              <Box
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  backgroundColor: 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(108,92,231,0.08)',
-                  transition: 'all 0.2s ease',
-                  '&:hover': {
-                    transform: 'translateY(-4px)',
-                    boxShadow: '0px 8px 32px rgba(108,92,231,0.12)',
-                  },
-                }}
-              >
-                <Typography sx={{ fontSize: '2rem', mb: 1 }}>{feature.emoji}</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                  {feature.title}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {feature.desc}
-                </Typography>
-              </Box>
-            </Grid>
+            <div 
+              key={feature.title} 
+              className="p-6 rounded-3xl bg-white/70 backdrop-blur-md border border-indigo-50 hover:border-indigo-100 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-indigo-100 group"
+            >
+              <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300 origin-left">{feature.emoji}</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-1">
+                {feature.title}
+              </h3>
+              <p className="text-sm text-gray-500 font-medium">
+                {feature.desc}
+              </p>
+            </div>
           ))}
-        </Grid>
-      </Container>
+        </div>
+      </main>
 
       {/* Footer */}
-      <Box sx={{ py: 3, textAlign: 'center' }}>
-        <Typography variant="caption" color="text.secondary">
+      <footer className="py-6 text-center">
+        <p className="text-xs font-semibold text-gray-400">
           Built with 💜 by LifePulse Team • 2026
-        </Typography>
-      </Box>
-    </Box>
+        </p>
+      </footer>
+    </div>
   );
 }

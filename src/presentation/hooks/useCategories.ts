@@ -59,3 +59,26 @@ export function useDeleteCategory() {
     },
   });
 }
+
+export function useTogglePinCategory() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, isPinned }: { id: string; isPinned: boolean }) =>
+      categoryRepository.togglePin(id, isPinned),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+  });
+}
+
+export function useIncrementCategoryUseCount() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => categoryRepository.incrementUseCount(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.categories.all });
+    },
+  });
+}

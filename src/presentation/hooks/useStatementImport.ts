@@ -1,10 +1,13 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
+import { useCategories } from './useCategories';
 import { useCreateTransactionsBulk } from './useTransactions';
 import { CreateTransactionInput } from '@/domain/entities';
 import { TransactionType, StatementSource } from '@/domain/enums';
 import { generateMockTransactions } from '@/data/mock/mockStatementTransactions';
+
+const LAST_IMPORT_KEY = 'lifepulse_last_import';
 
 export interface ParsedLLMTransaction {
   date: string;
@@ -37,56 +40,38 @@ interface UseStatementImportReturn {
   parseWithLLM: () => Promise<void>;
   importTransactions: (accountId: string) => Promise<void>;
   loadDemoData: () => void;
+  loadLastImport: () => void;
+  hasLastImport: boolean;
   reset: () => void;
+  fileType: 'document' | 'image';
+  setFileType: (type: 'document' | 'image') => void;
 }
 
-async function extractTextFromPDF(
-  file: File,
-  password?: string
-): Promise<string> {
-  const pdfjsLib = await import('pdfjs-dist');
 
-  // Use a local worker bundled with the package — avoids CDN fetch failures
-  pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-    'pdfjs-dist/build/pdf.worker.min.mjs',
-    import.meta.url
-  ).toString();
-
-  const arrayBuffer = await file.arrayBuffer();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const loadingTask: any = pdfjsLib.getDocument({
-    data: arrayBuffer,
-    ...(password ? { password } : {}),
-  });
-
-  const pdf = await loadingTask.promise;
-
-  const textParts: string[] = [];
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i);
-    const textContent = await page.getTextContent();
-    const pageText = textContent.items
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .map((item: any) => item.str)
-      .join(' ');
-    textParts.push(pageText);
-  }
-
-  return textParts.join('\n');
-}
 
 export function useStatementImport(): UseStatementImportReturn {
   const [status, setStatus] = useState<ImportStatus>('idle');
   const [file, setFile] = useState<File | null>(null);
+  const [fileType, setFileType] = useState<'document' | 'image'>('document');
   const [transactions, setTransactions] = useState<ParsedLLMTransaction[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [pdfPassword, setPdfPassword] = useState('');
+  const [hasLastImport, setHasLastImport] = useState(false);
 
+  const { data: categories = [] } = useCategories();
   const bulkCreate = useCreateTransactionsBulk();
+
+  // Check if there is a saved import in localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(LAST_IMPORT_KEY);
+      setHasLastImport(!!saved);
+    } catch { /* ignore */ }
+  }, []);
 
   const handleFileSelect = useCallback((selectedFile: File) => {
     setFile(selectedFile);
+    setFileType(selectedFile.type.startsWith('image/') ? 'image' : 'document');
     setTransactions([]);
     setError(null);
     setPdfPassword('');
@@ -99,57 +84,45 @@ export function useStatementImport(): UseStatementImportReturn {
       return;
     }
 
-    setError(null);
+    // Reset error only if it's not a password retry
+    if (status !== 'needs_password') {
+      setError(null);
+    }
 
     try {
-      // Step 1: Read file
-      setStatus('reading');
-      let text: string;
-      const fileName = file.name.toLowerCase();
-
-      if (fileName.endsWith('.pdf')) {
-        try {
-          text = await extractTextFromPDF(file, pdfPassword || undefined);
-        } catch (pdfErr) {
-          // Check if the error is a password-related error
-          const errMsg =
-            pdfErr instanceof Error ? pdfErr.message : String(pdfErr);
-          if (
-            errMsg.includes('password') ||
-            errMsg.includes('PasswordException') ||
-            errMsg.includes('Incorrect Password')
-          ) {
-            setStatus('needs_password');
-            setError(
-              pdfPassword
-                ? 'Incorrect password — please try again'
-                : 'This PDF is password-protected. Please enter the password.'
-            );
-            return;
-          }
-          throw pdfErr;
-        }
-      } else {
-        // CSV or other text file
-        text = await file.text();
+      // Step 1: Prepare data
+      setStatus('parsing'); // Use parsing status immediately to show loader
+      
+      const formData = new FormData();
+      formData.append('file', file);
+      if (pdfPassword) {
+        formData.append('password', pdfPassword);
       }
 
-      if (!text.trim()) {
-        setError('File appears to be empty or unreadable');
-        setStatus('error');
-        return;
-      }
-
+      // Send available categories for prediction
+      const categoryList = categories.map(c => ({ 
+        id: c.id, 
+        name: c.name, 
+        type: c.type 
+      }));
+      formData.append('categories', JSON.stringify(categoryList));
+      
       // Step 2: Send to LLM API
-      setStatus('parsing');
       const response = await fetch('/api/parse-statement', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text }),
+        body: formData,
       });
 
       if (!response.ok) {
         const err = await response.json();
+        
+        // Handle password required
+        if (response.status === 401 && err.code === 'PASSWORD_REQUIRED') {
+          setStatus('needs_password');
+          setError(pdfPassword ? 'Incorrect password' : 'PDF is password protected');
+          return;
+        }
+
         throw new Error(err.error || 'Failed to parse statement');
       }
 
@@ -163,11 +136,19 @@ export function useStatementImport(): UseStatementImportReturn {
 
       setTransactions(data.transactions);
       setStatus('ready');
+      setError(null);
+
+      // Persist to localStorage for recovery
+      try {
+        localStorage.setItem(LAST_IMPORT_KEY, JSON.stringify(data.transactions));
+        setHasLastImport(true);
+      } catch { /* quota exceeded, ignore */ }
     } catch (err) {
+      console.error('Parse error:', err);
       setError(err instanceof Error ? err.message : 'Failed to parse file');
       setStatus('error');
     }
-  }, [file, pdfPassword]);
+  }, [file, pdfPassword, status]);
 
   const loadDemoData = useCallback(() => {
     const mockData = generateMockTransactions(10);
@@ -175,6 +156,21 @@ export function useStatementImport(): UseStatementImportReturn {
     setStatus('ready');
     setError(null);
     setFile(null);
+  }, []);
+
+  const loadLastImport = useCallback(() => {
+    try {
+      const saved = localStorage.getItem(LAST_IMPORT_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as ParsedLLMTransaction[];
+        setTransactions(parsed);
+        setStatus('ready');
+        setError(null);
+        setFile(null);
+      }
+    } catch {
+      setError('Failed to load saved import');
+    }
   }, []);
 
   const importTransactions = useCallback(
@@ -213,6 +209,9 @@ export function useStatementImport(): UseStatementImportReturn {
 
         await bulkCreate.mutateAsync(inputs);
         setStatus('done');
+
+        // Clear saved import after successful import
+        try { localStorage.removeItem(LAST_IMPORT_KEY); setHasLastImport(false); } catch { /* ignore */ }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : 'Failed to import transactions'
@@ -243,6 +242,10 @@ export function useStatementImport(): UseStatementImportReturn {
     parseWithLLM,
     importTransactions,
     loadDemoData,
+    loadLastImport,
+    hasLastImport,
     reset,
+    fileType,
+    setFileType,
   };
 }

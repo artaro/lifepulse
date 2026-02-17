@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useMemo } from 'react';
-import { Box, Typography, Card, CardContent } from '@mui/material';
 import {
   PieChart,
   Pie,
@@ -58,55 +57,61 @@ export default function ExpensePieChart({ transactions, title = 'Spending by Cat
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderLegendText = (value: string, entry: any) => {
     const { payload } = entry;
-    return <span style={{ color: '#2d3436', fontWeight: 500 }}>{payload.icon} {value}</span>;
+    // Tailwind classes for legend text
+    return <span className="text-gray-700 font-medium text-sm ml-1">{payload.icon} {value}</span>;
   };
 
   return (
-    <Card sx={{ height: '100%' }}>
-      <CardContent sx={{ p: 3, height: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-          {title} (Monthly)
-        </Typography>
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 h-full flex flex-col">
+      <h3 className="text-lg font-bold text-gray-900 mb-4">
+        {title} <span className="text-gray-400 font-normal text-sm">(Monthly)</span>
+      </h3>
 
-        {filteredData.length > 0 ? (
-          <Box sx={{ flexGrow: 1, minHeight: 300 }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={filteredData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
-                  paddingAngle={5}
-                  dataKey="value"
-                >
-                  {filteredData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip 
-                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                  formatter={(value: any) => formatCurrency(Number(value))}
-                  contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
-                />
-                <Legend 
-                  layout="vertical" 
-                  verticalAlign="middle" 
-                  align="right"
-                  formatter={renderLegendText}
-                  iconType="circle" 
-                />
-              </PieChart>
-            </ResponsiveContainer>
-          </Box>
-        ) : (
-          <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-            <Typography sx={{ fontSize: '3rem', mb: 2 }}>📉</Typography>
-            <Typography color="text.secondary">No expenses this month</Typography>
-          </Box>
-        )}
-      </CardContent>
-    </Card>
+      {filteredData.length > 0 ? (
+        <div className="flex-grow min-h-[300px]">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
+            <PieChart>
+              <Pie
+                data={filteredData}
+                cx="50%"
+                cy="50%"
+                innerRadius={60}
+                outerRadius={80}
+                paddingAngle={5}
+                dataKey="value"
+              >
+                {filteredData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+                ))}
+              </Pie>
+              <Tooltip 
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                formatter={(value: any) => formatCurrency(Number(value))}
+                contentStyle={{ 
+                    borderRadius: '1rem', 
+                    border: 'none', 
+                    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                    backgroundColor: 'white',
+                    fontFamily: 'inherit'
+                }}
+                itemStyle={{ color: '#374151', fontWeight: 600 }}
+              />
+              <Legend 
+                layout="vertical" 
+                verticalAlign="middle" 
+                align="right"
+                formatter={renderLegendText}
+                iconType="circle" 
+              />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      ) : (
+        <div className="flex-grow flex flex-col items-center justify-center min-h-[300px] text-center">
+          <div className="text-5xl mb-3 opacity-50">📉</div>
+          <p className="text-gray-500 font-medium">No expenses this month</p>
+        </div>
+      )}
+    </div>
   );
 }
