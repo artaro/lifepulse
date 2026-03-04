@@ -38,12 +38,12 @@ export const transactionRepository = {
   ): Promise<PaginatedResponse<Transaction>> {
     let query = supabase
       .from('transactions')
-      .select('*, category:categories(*), account:accounts(*)', { count: 'exact' })
+      .select('*, category:categories(*), account:accounts!account_id(*), destinationAccount:accounts!destination_account_id(*)', { count: 'exact' })
       .eq('user_id', userId)
       .order('transaction_date', { ascending: false });
 
     if (filter?.accountId) {
-      query = query.eq('account_id', filter.accountId);
+      query = query.or(`account_id.eq.${filter.accountId},destination_account_id.eq.${filter.accountId}`);
     }
     if (filter?.categoryId) {
       query = query.eq('category_id', filter.categoryId);
@@ -110,7 +110,7 @@ export const transactionRepository = {
   async getById(id: string): Promise<Transaction | null> {
     const { data, error } = await supabase
       .from('transactions')
-      .select('*, category:categories(*), account:accounts(*)')
+      .select('*, category:categories(*), account:accounts!account_id(*), destinationAccount:accounts!destination_account_id(*)')
       .eq('id', id)
       .single();
 
@@ -128,7 +128,7 @@ export const transactionRepository = {
         ...toSnakeCase(input as unknown as Record<string, unknown>),
         user_id: userId,
       })
-      .select('*, category:categories(*), account:accounts(*)')
+      .select('*, category:categories(*), account:accounts!account_id(*), destinationAccount:accounts!destination_account_id(*)')
       .single();
 
     if (error) throw new Error(error.message);
@@ -161,7 +161,7 @@ export const transactionRepository = {
       .from('transactions')
       .update(toSnakeCase(input as unknown as Record<string, unknown>))
       .eq('id', id)
-      .select('*, category:categories(*), account:accounts(*)')
+      .select('*, category:categories(*), account:accounts!account_id(*), destinationAccount:accounts!destination_account_id(*)')
       .single();
 
     if (error) throw new Error(error.message);
@@ -201,9 +201,10 @@ export const transactionRepository = {
     rows.forEach((row) => {
       if (row.type === 'income') {
         totalIncome += Number(row.amount);
-      } else {
+      } else if (row.type === 'expense') {
         totalExpense += Number(row.amount);
       }
+      // 'transfer' type is ignored for net income/expense calculations
     });
 
     return {

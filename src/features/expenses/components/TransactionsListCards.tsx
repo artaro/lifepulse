@@ -1,12 +1,11 @@
+"use client";
 
-'use client';
-
-import React, { useState } from 'react';
-import { Trash2, Pencil } from 'lucide-react';
-import { Transaction, Category, Account } from '@/features/expenses/types';
-import { formatCurrency, formatDate } from '@/shared/lib/formatters';
-import { useTranslation } from '@/shared/lib/i18n';
-import { ConfirmDialog } from '@/shared/components';
+import React, { useState } from "react";
+import { Trash2, Pencil } from "lucide-react";
+import { Transaction, Category, Account } from "@/features/expenses/types";
+import { formatCurrency, formatDate } from "@/shared/lib/formatters";
+import { useTranslation } from "@/shared/lib/i18n";
+import { ConfirmDialog } from "@/shared/components";
 
 interface TransactionsListCardsProps {
   transactions: Transaction[];
@@ -14,7 +13,7 @@ interface TransactionsListCardsProps {
   onDeleteTransaction: (id: string) => void;
   categories: Category[];
   accounts: Account[];
-  selectedType: 'income' | 'expense' | null;
+  selectedType: "income" | "expense" | null;
 }
 
 export default function TransactionsListCards({
@@ -26,9 +25,13 @@ export default function TransactionsListCards({
   selectedType,
 }: TransactionsListCardsProps) {
   const { t } = useTranslation();
-  const [deleteConfirm, setDeleteConfirm] = useState<{ type: 'single'; id: string } | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: "single";
+    id: string;
+  } | null>(null);
 
-  const handleDeleteSingleRequest = (id: string) => setDeleteConfirm({ type: 'single', id });
+  const handleDeleteSingleRequest = (id: string) =>
+    setDeleteConfirm({ type: "single", id });
 
   const handleConfirmDelete = () => {
     if (!deleteConfirm) return;
@@ -37,9 +40,12 @@ export default function TransactionsListCards({
   };
 
   const getDeleteMessage = () => {
-    if (!deleteConfirm) return '';
-    const tx = transactions.find(t => t.id === deleteConfirm.id);
-    return t('import.deleteMsg', { name: tx?.description || '', amount: formatCurrency(tx?.amount || 0) });
+    if (!deleteConfirm) return "";
+    const tx = transactions.find((t) => t.id === deleteConfirm.id);
+    return t("import.deleteMsg", {
+      name: tx?.description || "",
+      amount: formatCurrency(tx?.amount || 0),
+    });
   };
 
   return (
@@ -47,11 +53,13 @@ export default function TransactionsListCards({
       {/* Transaction rows */}
       <div className="space-y-0.5">
         {transactions.map((tx) => {
-          const cat = categories.find(c => c.id === tx.categoryId);
-          const account = accounts.find(a => a.id === tx.accountId);
+          const cat = categories.find((c) => c.id === tx.categoryId);
+          const account = accounts.find((a) => a.id === tx.accountId);
 
           const isOtherType = selectedType && selectedType !== tx.type;
-          const blurClass = isOtherType ? 'blur-[2px] opacity-40 pointer-events-none grayscale' : '';
+          const blurClass = isOtherType
+            ? "blur-[2px] opacity-40 pointer-events-none grayscale"
+            : "";
 
           return (
             <div
@@ -62,26 +70,41 @@ export default function TransactionsListCards({
                 ${blurClass}
               `}
             >
-              {/* Category icon */}
+              {/* Category / Transfer icon */}
               <div className="row-span-2 md:row-span-1 flex-shrink-0">
                 <div
                   className="w-9 h-9 flex items-center justify-center text-lg border-2 border-[var(--color-border)]"
-                  style={{ backgroundColor: cat ? `${cat.color}20` : '#242424' }}
+                  style={{
+                    backgroundColor:
+                      tx.type === "transfer"
+                        ? "var(--color-surface-2)"
+                        : cat
+                          ? `${cat.color}20`
+                          : "#242424",
+                    color:
+                      tx.type === "transfer"
+                        ? "var(--color-transfer)"
+                        : "inherit",
+                  }}
                 >
-                  {cat?.icon || '📦'}
+                  {tx.type === "transfer" ? "🔄" : cat?.icon || "📦"}
                 </div>
               </div>
 
               {/* Description + account */}
               <div className="col-start-2 md:col-auto md:flex-1 min-w-0 flex flex-col justify-center">
                 <div className="w-full text-sm font-bold text-[var(--color-text-primary)] truncate tracking-tight">
-                  {tx.description || t('txForm.description')}
+                  {tx.description || t("txForm.description")}
                 </div>
                 <div className="flex items-center gap-1.5 mt-0.5">
                   <span className="text-[11px] font-bold text-[var(--color-text-secondary)] truncate uppercase tracking-wider">
-                    {account?.name}
+                    {tx.type === "transfer"
+                      ? `To: ${tx.destinationAccount?.name || "Unknown"}`
+                      : account?.name}
                   </span>
-                  <span className="text-[10px] text-[var(--color-text-muted)]">•</span>
+                  <span className="text-[10px] text-[var(--color-text-muted)]">
+                    •
+                  </span>
                   <span className="text-[11px] font-medium text-[var(--color-text-muted)]">
                     {formatDate(tx.transactionDate)}
                   </span>
@@ -91,10 +114,18 @@ export default function TransactionsListCards({
               {/* Amount */}
               <div
                 className={`col-start-3 md:col-auto justify-self-end text-sm font-bold whitespace-nowrap text-right min-w-[70px] ${
-                  tx.type === 'expense' ? 'text-[var(--color-expense)]' : 'text-[var(--color-income)]'
+                  tx.type === "transfer"
+                    ? "text-[var(--color-transfer)]"
+                    : tx.type === "expense"
+                      ? "text-[var(--color-expense)]"
+                      : "text-[var(--color-income)]"
                 }`}
               >
-                {tx.type === 'expense' ? '-' : '+'}
+                {tx.type === "transfer"
+                  ? ""
+                  : tx.type === "expense"
+                    ? "-"
+                    : "+"}
                 {formatCurrency(tx.amount)}
               </div>
 
@@ -104,7 +135,7 @@ export default function TransactionsListCards({
                   onClick={() => onEditTransaction(tx)}
                   disabled={!!isOtherType}
                   className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-primary)]/20 transition-colors disabled:opacity-0"
-                  title={t('common.edit')}
+                  title={t("common.edit")}
                 >
                   <Pencil size={15} />
                 </button>
@@ -112,7 +143,7 @@ export default function TransactionsListCards({
                   onClick={() => handleDeleteSingleRequest(tx.id)}
                   disabled={!!isOtherType}
                   className="p-1.5 text-[var(--color-text-muted)] hover:text-[var(--color-expense)] hover:bg-[var(--color-expense)]/20 transition-colors disabled:opacity-0"
-                  title={t('common.delete')}
+                  title={t("common.delete")}
                 >
                   <Trash2 size={15} />
                 </button>
@@ -125,10 +156,10 @@ export default function TransactionsListCards({
       {/* Delete Confirmation Modal */}
       <ConfirmDialog
         open={!!deleteConfirm}
-        title={t('confirm.delete')}
+        title={t("confirm.delete")}
         message={getDeleteMessage()}
-        confirmLabel={t('common.delete')}
-        cancelLabel={t('common.cancel')}
+        confirmLabel={t("common.delete")}
+        cancelLabel={t("common.cancel")}
         onConfirm={handleConfirmDelete}
         onCancel={() => setDeleteConfirm(null)}
       />

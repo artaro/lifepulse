@@ -1,16 +1,20 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Calendar as CalendarIcon, 
-  FileText, 
-  DollarSign, 
-  ChevronDown 
-} from 'lucide-react';
-import { TransactionType } from '@/features/expenses/types';
-import { Account, Category, CreateTransactionInput } from '@/features/expenses/types';
-import { useTranslation } from '@/shared/lib/i18n';
+import React, { useState, useEffect } from "react";
+import {
+  X,
+  Calendar as CalendarIcon,
+  FileText,
+  DollarSign,
+  ChevronDown,
+} from "lucide-react";
+import { TransactionType } from "@/features/expenses/types";
+import {
+  Account,
+  Category,
+  CreateTransactionInput,
+} from "@/features/expenses/types";
+import { useTranslation } from "@/shared/lib/i18n";
 
 interface TransactionFormProps {
   open: boolean;
@@ -35,12 +39,13 @@ export default function TransactionForm({
 }: TransactionFormProps) {
   const { t } = useTranslation();
   const [formData, setFormData] = useState({
-    description: '',
-    amount: '',
+    description: "",
+    amount: "",
     type: TransactionType.EXPENSE,
-    accountId: '',
-    categoryId: '',
-    transactionDate: new Date().toISOString().split('T')[0],
+    accountId: "",
+    categoryId: "",
+    destinationAccountId: "",
+    transactionDate: new Date().toISOString().split("T")[0],
   });
 
   useEffect(() => {
@@ -48,21 +53,25 @@ export default function TransactionForm({
       if (initialData) {
         // eslint-disable-next-line
         setFormData({
-            description: initialData.description || '',
-            amount: initialData.amount?.toString() || '',
-            type: initialData.type || TransactionType.EXPENSE,
-            accountId: initialData.accountId || '',
-            categoryId: initialData.categoryId || '',
-            transactionDate: initialData.transactionDate || new Date().toISOString().split('T')[0],
+          description: initialData.description || "",
+          amount: initialData.amount?.toString() || "",
+          type: initialData.type || TransactionType.EXPENSE,
+          accountId: initialData.accountId || "",
+          categoryId: initialData.categoryId || "",
+          destinationAccountId: initialData.destinationAccountId || "",
+          transactionDate:
+            initialData.transactionDate ||
+            new Date().toISOString().split("T")[0],
         });
       } else {
         setFormData({
-            description: '',
-            amount: '',
-            type: TransactionType.EXPENSE,
-            accountId: accounts.length > 0 ? accounts[0].id : '',
-            categoryId: '',
-            transactionDate: new Date().toISOString().split('T')[0],
+          description: "",
+          amount: "",
+          type: TransactionType.EXPENSE,
+          accountId: accounts.length > 0 ? accounts[0].id : "",
+          categoryId: "",
+          destinationAccountId: "",
+          transactionDate: new Date().toISOString().split("T")[0],
         });
       }
     }
@@ -73,17 +82,17 @@ export default function TransactionForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
-        ...formData,
-        amount: Number(formData.amount),
+      ...formData,
+      amount: Number(formData.amount),
     });
   };
 
-  const filteredCategories = categories.filter(c => c.type === formData.type);
+  const filteredCategories = categories.filter((c) => c.type === formData.type);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div 
+      <div
         className="fixed inset-0 bg-black/20 backdrop-blur-sm animate-fade-in"
         onClick={onClose}
       />
@@ -93,9 +102,9 @@ export default function TransactionForm({
         {/* Header */}
         <div className="flex items-center justify-between p-5 border-b-2 border-[var(--color-border)]">
           <h2 className="text-xl font-bold text-[var(--color-text-primary)] font-[var(--font-brand)] uppercase tracking-wider">
-            {isEdit ? t('txForm.editTransaction') : t('txForm.newTransaction')}
+            {isEdit ? t("txForm.editTransaction") : t("txForm.newTransaction")}
           </h2>
-          <button 
+          <button
             onClick={onClose}
             className="p-1.5 text-[var(--color-text-secondary)] hover:text-[var(--color-primary)] transition-colors"
           >
@@ -108,145 +117,270 @@ export default function TransactionForm({
           {/* Type Toggle */}
           <div className="flex border-2 border-[var(--color-border)]">
             <button
-                type="button"
-                onClick={() => setFormData({...formData, type: TransactionType.EXPENSE, categoryId: ''})}
-                className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-all ${
-                    formData.type === TransactionType.EXPENSE
-                    ? 'bg-[var(--color-expense)] text-[var(--color-text-inverse)]' 
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]'
-                }`}
+              type="button"
+              onClick={() =>
+                setFormData({
+                  ...formData,
+                  type: TransactionType.EXPENSE,
+                  categoryId: "",
+                  destinationAccountId: "",
+                })
+              }
+              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-all ${
+                formData.type === TransactionType.EXPENSE
+                  ? "bg-[var(--color-expense)] text-[var(--color-text-inverse)]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]"
+              }`}
             >
-                {t('transactions.expense')}
+              {t("transactions.expense")}
             </button>
             <button
-                type="button"
-                onClick={() => setFormData({...formData, type: TransactionType.INCOME, categoryId: ''})}
-                className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-all border-l-2 border-[var(--color-border)] ${
-                    formData.type === TransactionType.INCOME
-                    ? 'bg-[var(--color-income)] text-[var(--color-text-inverse)]' 
-                    : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]'
-                }`}
+              type="button"
+              onClick={() =>
+                setFormData({
+                  ...formData,
+                  type: TransactionType.INCOME,
+                  categoryId: "",
+                  destinationAccountId: "",
+                })
+              }
+              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-all border-l-2 border-[var(--color-border)] ${
+                formData.type === TransactionType.INCOME
+                  ? "bg-[var(--color-income)] text-[var(--color-text-inverse)]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]"
+              }`}
             >
-                {t('transactions.income')}
+              {t("transactions.income")}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                setFormData({
+                  ...formData,
+                  type: TransactionType.TRANSFER,
+                  categoryId: "",
+                  destinationAccountId: "",
+                })
+              }
+              className={`flex-1 py-2 text-sm font-bold uppercase tracking-wider transition-all border-l-2 border-[var(--color-border)] ${
+                formData.type === TransactionType.TRANSFER
+                  ? "bg-[var(--color-transfer)] text-[var(--color-text-inverse)]"
+                  : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)]"
+              }`}
+            >
+              {t("transactions.transfer")}
             </button>
           </div>
 
           {/* Amount */}
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">{t('txForm.amount')}</label>
+            <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">
+              {t("txForm.amount")}
+            </label>
             <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">
-                    <DollarSign size={18} />
-                </div>
-                <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    placeholder="0.00"
-                    value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    className="brutal-input w-full pl-10 pr-4 py-3 text-lg"
-                    required
-                    autoFocus={!isEdit}
-                />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] font-bold">
+                <DollarSign size={18} />
+              </div>
+              <input
+                type="number"
+                step="0.01"
+                min="0"
+                placeholder="0.00"
+                value={formData.amount}
+                onChange={(e) =>
+                  setFormData({ ...formData, amount: e.target.value })
+                }
+                className="brutal-input w-full pl-10 pr-4 py-3 text-lg"
+                required
+                autoFocus={!isEdit}
+              />
             </div>
           </div>
 
           {/* Description */}
           <div>
-            <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">{t('txForm.description')}</label>
+            <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">
+              {t("txForm.description")}
+            </label>
             <div className="relative">
-                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]">
-                    <FileText size={18} />
-                </div>
-                <input
-                    type="text"
-                    placeholder={t('txForm.descriptionPlaceholder')}
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                    className="brutal-input w-full pl-10 pr-4 py-3"
-                    required
-                />
+              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]">
+                <FileText size={18} />
+              </div>
+              <input
+                type="text"
+                placeholder={t("txForm.descriptionPlaceholder")}
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+                className="brutal-input w-full pl-10 pr-4 py-3"
+                required
+              />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-              {/* Category */}
+            {/* Category (Hidden for Transfers) */}
+            {formData.type !== TransactionType.TRANSFER && (
               <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">{t('txForm.category')}</label>
+                <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">
+                  {t("txForm.category")}
+                </label>
                 <div className="relative">
-                    <select
-                        value={formData.categoryId}
-                        onChange={(e) => setFormData({...formData, categoryId: e.target.value})}
-                        className="brutal-input w-full pl-3 pr-8 py-2.5 appearance-none font-medium text-sm truncate cursor-pointer bg-[var(--color-surface)]"
-                        required
-                    >
-                        <option value="" disabled>{t('txForm.selectCategory')}</option>
-                        {filteredCategories.map(c => (
-                            <option key={c.id} value={c.id}>
-                                {c.icon} {c.name}
-                            </option>
-                        ))}
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none" size={16} />
-                </div>
-              </div>
-
-              {/* Date */}
-              <div>
-                <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">{t('txForm.date')}</label>
-                <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]">
-                        <CalendarIcon size={16} />
-                    </div>
-                    <input
-                        type="date"
-                        value={formData.transactionDate}
-                        onChange={(e) => setFormData({...formData, transactionDate: e.target.value})}
-                        className="brutal-input w-full pl-9 pr-3 py-2.5 font-medium text-sm"
-                        required
-                    />
-                </div>
-              </div>
-          </div>
-
-          {/* Account */}
-          <div>
-            <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">{t('txForm.account')}</label>
-            <div className="relative">
-                <select
-                    value={formData.accountId}
-                    onChange={(e) => setFormData({...formData, accountId: e.target.value})}
-                    className="brutal-input w-full pl-3 pr-8 py-3 appearance-none font-medium text-sm bg-[var(--color-surface)] cursor-pointer"
+                  <select
+                    value={formData.categoryId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, categoryId: e.target.value })
+                    }
+                    className="brutal-input w-full pl-3 pr-8 py-2.5 appearance-none font-medium text-sm truncate cursor-pointer bg-[var(--color-surface)]"
                     required
-                >
-                    <option value="" disabled>{t('txForm.selectAccount')}</option>
-                    {accounts.map(a => (
-                        <option key={a.id} value={a.id}>
-                            {a.type === 'bank' ? '🏦' : '💳'} {a.name}
-                        </option>
+                  >
+                    <option value="" disabled>
+                      {t("txForm.selectCategory")}
+                    </option>
+                    {filteredCategories.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.icon} {c.name}
+                      </option>
                     ))}
-                </select>
-                <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none" size={20} />
+                  </select>
+                  <ChevronDown
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none"
+                    size={16}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Date */}
+            <div>
+              <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">
+                {t("txForm.date")}
+              </label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)]">
+                  <CalendarIcon size={16} />
+                </div>
+                <input
+                  type="date"
+                  value={formData.transactionDate}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      transactionDate: e.target.value,
+                    })
+                  }
+                  className="brutal-input w-full pl-9 pr-3 py-2.5 font-medium text-sm"
+                  required
+                />
+              </div>
             </div>
           </div>
+
+          {/* Account Selections */}
+          <div
+            className={`grid gap-4 ${formData.type === TransactionType.TRANSFER ? "grid-cols-2" : "grid-cols-1"}`}
+          >
+            <div>
+              <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">
+                {formData.type === TransactionType.TRANSFER
+                  ? t("txForm.fromAccount")
+                  : t("txForm.account")}
+              </label>
+              <div className="relative">
+                <select
+                  value={formData.accountId}
+                  onChange={(e) =>
+                    setFormData({ ...formData, accountId: e.target.value })
+                  }
+                  className="brutal-input w-full pl-3 pr-8 py-3 appearance-none font-medium text-sm bg-[var(--color-surface)] cursor-pointer"
+                  required
+                >
+                  <option value="" disabled>
+                    {t("txForm.selectAccount")}
+                  </option>
+                  {accounts.map((a) => (
+                    <option key={a.id} value={a.id}>
+                      {a.type === "bank" ? "🏦" : "💳"} {a.name}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none"
+                  size={20}
+                />
+              </div>
+            </div>
+
+            {formData.type === TransactionType.TRANSFER && (
+              <div>
+                <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-1.5 ml-1">
+                  {t("txForm.toAccount")}
+                </label>
+                <div className="relative">
+                  <select
+                    value={formData.destinationAccountId}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        destinationAccountId: e.target.value,
+                      })
+                    }
+                    className="brutal-input w-full pl-3 pr-8 py-3 appearance-none font-medium text-sm bg-[var(--color-surface)] cursor-pointer"
+                    required
+                  >
+                    <option value="" disabled>
+                      {t("txForm.selectAccount")}
+                    </option>
+                    {accounts.map((a) => (
+                      <option key={a.id} value={a.id}>
+                        {a.type === "bank" ? "🏦" : "💳"} {a.name}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] pointer-events-none"
+                    size={20}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
+          {formData.type === TransactionType.TRANSFER &&
+            formData.accountId === formData.destinationAccountId &&
+            formData.accountId !== "" && (
+              <p className="text-sm font-medium text-[var(--color-expense)] mt-1 ml-1">
+                {t("txForm.sameAccountError")}
+              </p>
+            )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4 border-t-2 border-[var(--color-border)] mt-2">
             <button
-                type="button"
-                onClick={onClose}
-                className="px-5 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] border-2 border-[var(--color-border)] transition-colors uppercase tracking-wider"
-                disabled={loading}
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 text-sm font-bold text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] border-2 border-[var(--color-border)] transition-colors uppercase tracking-wider"
+              disabled={loading}
             >
-                {t('common.cancel')}
+              {t("common.cancel")}
             </button>
             <button
-                type="submit"
-                disabled={loading || !formData.amount || !formData.description || !formData.accountId || !formData.categoryId}
-                className="brutal-btn px-6 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              type="submit"
+              disabled={
+                loading ||
+                !formData.amount ||
+                !formData.description ||
+                !formData.accountId ||
+                (formData.type !== TransactionType.TRANSFER &&
+                  !formData.categoryId) ||
+                (formData.type === TransactionType.TRANSFER &&
+                  (!formData.destinationAccountId ||
+                    formData.accountId === formData.destinationAccountId))
+              }
+              className="brutal-btn px-6 py-2.5 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
-                {loading ? t('common.saving') : t('txForm.saveTransaction')}
+              {loading ? t("common.saving") : t("txForm.saveTransaction")}
             </button>
           </div>
         </form>

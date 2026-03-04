@@ -1,42 +1,81 @@
-@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@600;700&family=IBM+Plex+Sans+Thai:wght@400;500;600&display=swap");
 @import "tailwindcss";
 
-/* ── Aomkeng Design System — Neo-Brutalism Dark ───────────────────────────── */
+/* ── Aomkeng Design System ────────────────────────────────────────────────── */
 
-@theme {
-  /* Brand Colors */
-  --color-primary: #00FFAB;          /* Money Mint — ออมแล้วรวย */
-  --color-primary-dim: #00CC88;      /* Money Mint dim — hover states */
-  --color-secondary: #FFF01F;        /* Risky Yellow — bold accents */
-  --color-accent: #FF6B6B;           /* Danger Red — ใช้จ่ายแล้วเสียดาย */
+/* ── Dark Brutal ────────────────────────────────────────────────── */
+html[data-theme="dark-brutal"] {
+  /* Brand */
+  --color-primary: #00ffab;
+  --color-primary-dim: #00cc88;
+  --color-secondary: #fff01f;
+  --color-accent: #ff6b6b;
 
-  /* Semantic — Finance */
-  --color-income: #00FFAB;           /* รายรับ = mint */
-  --color-expense: #FF6B6B;          /* รายจ่าย = red */
-  --color-transfer: #FFF01F;         /* โอนเงิน = yellow */
+  /* Finance */
+  --color-income: #00ffab;
+  --color-expense: #ff6b6b;
+  --color-transfer: #fff01f;
 
   /* Surface */
-  --color-background: #0D0D0D;       /* Deep Charcoal */
-  --color-surface: #1A1A1A;          /* Card surface */
-  --color-surface-2: #242424;        /* Elevated surface */
-  --color-border: #2E2E2E;           /* Subtle border */
-  --color-border-strong: #00FFAB;    /* Highlight border */
+  --color-background: #0d0d0d;
+  --color-surface: #1a1a1a;
+  --color-surface-2: #242424;
+  --color-border: #2e2e2e;
+  --color-border-strong: #00ffab;
 
   /* Text */
-  --color-text-primary: #F5F5F5;
-  --color-text-secondary: #A0A0A0;
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #a0a0a0;
   --color-text-muted: #555555;
-  --color-text-inverse: #0D0D0D;
+  --color-text-inverse: #0d0d0d;
 
   /* Fonts */
-  --font-brand: 'Chakra Petch', sans-serif;   /* headers, brand name */
-  --font-sans: 'IBM Plex Sans Thai', sans-serif; /* body, UI */
+  --font-brand: "Chakra Petch", sans-serif;
+  --font-sans: "IBM Plex Sans Thai", sans-serif;
 
-  /* Neo-brutalism radius (sharp!) */
+  /* Radius — Neo-brutalism: sharp */
   --radius-sm: 0px;
   --radius-md: 2px;
   --radius-lg: 4px;
   --radius-xl: 4px;
+}
+
+/* ── Default: Soft Light Theme ────────────────────────────────────────────── */
+html,
+html[data-theme="light-soft"] {
+  /* Brand */
+  --color-primary: #3b82f6; /* Softer blue */
+  --color-primary-dim: #2563eb;
+  --color-secondary: #fbbf24; /* Softer yellow */
+  --color-accent: #f87171; /* Softer red */
+
+  /* Finance */
+  --color-income: #10b981; /* Softer emerald green instead of bold green */
+  --color-expense: #f43f5e; /* Softer rose red instead of bold red */
+  --color-transfer: #f59e0b; /* Amber */
+
+  /* Surface */
+  --color-background: #fafaf8;
+  --color-surface: #ffffff;
+  --color-surface-2: #f4f1ec;
+  --color-border: #e5e1d8;
+  --color-border-strong: #2563eb;
+
+  /* Text */
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #6b7280;
+  --color-text-muted: #9ca3af;
+  --color-text-inverse: #ffffff;
+
+  /* Fonts */
+  --font-brand: "Chakra Petch", sans-serif;
+  --font-sans: "IBM Plex Sans Thai", sans-serif;
+
+  /* Radius — Soft: rounded */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
 }
 
 /* ── Base Styles ─────────────────────────────────────────────────────────── */
@@ -48,10 +87,15 @@ body {
   margin: 0;
   padding: 0;
   -webkit-font-smoothing: antialiased;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /* Brand headers — Chakra Petch, uppercase, tight */
-h1, h2, .font-brand {
+h1,
+h2,
+.font-brand {
   font-family: var(--font-brand);
   text-transform: uppercase;
   letter-spacing: 0.02em;
@@ -59,7 +103,7 @@ h1, h2, .font-brand {
 
 /* ── Neo-Brutalism Utilities ─────────────────────────────────────────────── */
 
-/* Hard shadow — primary (mint) */
+/* Hard shadow — primary */
 .brutal-shadow {
   box-shadow: 4px 4px 0px 0px var(--color-primary);
 }
@@ -75,7 +119,9 @@ h1, h2, .font-brand {
 
 /* Hover: shadow lifts */
 .brutal-hover {
-  transition: box-shadow 0.1s ease, transform 0.1s ease;
+  transition:
+    box-shadow 0.1s ease,
+    transform 0.1s ease;
 }
 .brutal-hover:hover {
   box-shadow: 6px 6px 0px 0px var(--color-primary);
@@ -93,7 +139,7 @@ h1, h2, .font-brand {
   box-shadow: 4px 4px 0px 0px var(--color-primary);
 }
 
-/* Input base — dark, sharp */
+/* Input base */
 .brutal-input {
   background-color: var(--color-surface);
   border: 2px solid var(--color-border);
@@ -106,7 +152,7 @@ h1, h2, .font-brand {
   border-color: var(--color-primary);
 }
 
-/* Button — primary (mint) */
+/* Button — primary */
 .brutal-btn {
   font-family: var(--font-brand);
   text-transform: uppercase;
@@ -115,12 +161,14 @@ h1, h2, .font-brand {
   background-color: var(--color-primary);
   color: var(--color-text-inverse);
   border: 2px solid var(--color-primary);
-  box-shadow: 4px 4px 0px 0px #ffffff22;
+  box-shadow: 4px 4px 0px 0px #00000022;
   cursor: pointer;
-  transition: box-shadow 0.1s ease, transform 0.1s ease;
+  transition:
+    box-shadow 0.1s ease,
+    transform 0.1s ease;
 }
 .brutal-btn:hover {
-  box-shadow: 6px 6px 0px 0px #ffffff33;
+  box-shadow: 6px 6px 0px 0px #00000033;
   transform: translate(-1px, -1px);
 }
 .brutal-btn:active {
@@ -128,7 +176,7 @@ h1, h2, .font-brand {
   transform: translate(2px, 2px);
 }
 
-/* Scrollbar — dark, thin */
+/* Scrollbar — themed */
 ::-webkit-scrollbar {
   width: 4px;
   height: 4px;
@@ -151,14 +199,26 @@ h1, h2, .font-brand {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(6px); }
-  to   { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes progress {
-  0%   { transform: translateX(-100%); }
-  50%  { transform: translateX(0%); }
-  100% { transform: translateX(100%); }
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 .animate-progress {
@@ -166,23 +226,49 @@ h1, h2, .font-brand {
 }
 
 @keyframes shrink {
-  from { width: 100%; }
-  to   { width: 0%; }
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
 }
 
-/* Glitch effect — for brand name playfulness */
+/* Glitch effect — brand name */
 @keyframes glitch {
-  0%, 100% { clip-path: inset(0 0 100% 0); transform: translateX(0); }
-  20%       { clip-path: inset(20% 0 60% 0); transform: translateX(-3px); }
-  40%       { clip-path: inset(50% 0 30% 0); transform: translateX(3px); }
-  60%       { clip-path: inset(70% 0 10% 0); transform: translateX(-2px); }
-  80%       { clip-path: inset(10% 0 80% 0); transform: translateX(2px); }
+  0%,
+  100% {
+    clip-path: inset(0 0 100% 0);
+    transform: translateX(0);
+  }
+  20% {
+    clip-path: inset(20% 0 60% 0);
+    transform: translateX(-3px);
+  }
+  40% {
+    clip-path: inset(50% 0 30% 0);
+    transform: translateX(3px);
+  }
+  60% {
+    clip-path: inset(70% 0 10% 0);
+    transform: translateX(-2px);
+  }
+  80% {
+    clip-path: inset(10% 0 80% 0);
+    transform: translateX(2px);
+  }
 }
 
-/* Blink — for the "missing อ" effect on brand name */
+/* Blink — brand name */
 @keyframes blinkOut {
-  0%, 80%, 100% { opacity: 1; }
-  90%           { opacity: 0; }
+  0%,
+  80%,
+  100% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0;
+  }
 }
 
 .animate-blink-char {
@@ -207,16 +293,50 @@ h1, h2, .font-brand {
 /* ── Landing / Misc ──────────────────────────────────────────────────────── */
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50%       { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
-.animate-float        { animation: float 3s ease-in-out infinite; }
-.animate-float-slow   { animation: float 5s ease-in-out infinite; }
-.animate-float-delayed{ animation: float 4s ease-in-out infinite 1.2s; }
+.animate-float {
+  animation: float 3s ease-in-out infinite;
+}
+.animate-float-slow {
+  animation: float 5s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: float 4s ease-in-out infinite 1.2s;
+}
 
 @keyframes bounceSlow {
-  0%, 100% { transform: translateY(0); opacity: 0.5; }
-  50%       { transform: translateY(6px); opacity: 1; }
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  50% {
+    transform: translateY(6px);
+    opacity: 1;
+  }
 }
-.animate-bounce-slow { animation: bounceSlow 2.5s ease-in-out infinite; }
+.animate-bounce-slow {
+  animation: bounceSlow 2.5s ease-in-out infinite;
+}
+
+/* Theme transition — smooth swap */
+*,
+*::before,
+*::after {
+  transition-property: background-color, border-color, color, box-shadow;
+  transition-duration: 0.2s;
+  transition-timing-function: ease;
+}
+/* Prevent transitions on initial load */
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}

@@ -3,6 +3,7 @@
 export enum TransactionType {
     INCOME = 'income',
     EXPENSE = 'expense',
+    TRANSFER = 'transfer',
 }
 
 export enum AccountType {
@@ -99,10 +100,12 @@ export interface Transaction {
     transactionDate: string;
     source: StatementSource;
     referenceId: string | null;
+    destinationAccountId: string | null;
     createdAt: string;
     updatedAt: string;
     category?: Category;
     account?: Account;
+    destinationAccount?: Account;
 }
 
 export interface CreateTransactionInput {
@@ -114,6 +117,7 @@ export interface CreateTransactionInput {
     transactionDate: string;
     source?: StatementSource;
     referenceId?: string;
+    destinationAccountId?: string;
 }
 
 export interface UpdateTransactionInput {
@@ -123,6 +127,7 @@ export interface UpdateTransactionInput {
     amount?: number;
     description?: string;
     transactionDate?: string;
+    destinationAccountId?: string | null;
 }
 
 export interface TransactionFilter {
@@ -194,12 +199,38 @@ import { z } from 'zod';
 export const transactionSchema = z.object({
     accountId: z.string().min(1, 'Account is required'),
     categoryId: z.string().optional(),
+    destinationAccountId: z.string().optional(),
     type: z.nativeEnum(TransactionType),
     amount: z
         .number({ error: 'Amount must be a valid number' })
         .positive('Amount must be greater than 0'),
     description: z.string().optional(),
     transactionDate: z.string().min(1, 'Date is required'),
+}).superRefine((data, ctx) => {
+    if (data.type === TransactionType.TRANSFER) {
+        if (!data.destinationAccountId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['destinationAccountId'],
+                message: 'Destination account is required for transfers',
+            });
+        }
+        if (data.accountId === data.destinationAccountId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['destinationAccountId'],
+                message: 'Cannot transfer to the same account',
+            });
+        }
+    } else {
+        if (!data.categoryId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ['categoryId'],
+                message: 'Category is required for income and expense',
+            });
+        }
+    }
 });
 
 export type TransactionFormValues = z.infer<typeof transactionSchema>;

@@ -1,11 +1,11 @@
-'use client';
+"use client";
 
-import React from 'react';
-import { Edit2, Trash2 } from 'lucide-react';
-import { Transaction } from '@/features/expenses/types';
-import { AccountType } from '@/features/expenses/types';
-import { formatCurrency, formatDate } from '@/shared/lib/formatters';
-import { useCategories, useAccounts } from '@/features/expenses';
+import React from "react";
+import { Edit2, Trash2 } from "lucide-react";
+import { Transaction } from "@/features/expenses/types";
+import { AccountType } from "@/features/expenses/types";
+import { formatCurrency, formatDate } from "@/shared/lib/formatters";
+import { useCategories, useAccounts } from "@/features/expenses";
 
 interface TransactionItemProps {
   transaction: Transaction;
@@ -26,42 +26,69 @@ export default function TransactionItem({
   const category = categories.find((c) => c.id === transaction.categoryId);
   const account = accounts.find((a) => a.id === transaction.accountId);
 
-  const accountIcon = account?.type === AccountType.CREDIT_CARD ? '💳' : '🏦';
+  const accountIcon = account?.type === AccountType.CREDIT_CARD ? "💳" : "🏦";
 
   return (
-    <div
-      className="group flex items-center justify-between p-4 bg-[var(--color-surface)] border-2 border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all duration-200"
-    >
+    <div className="group flex items-center justify-between p-4 bg-[var(--color-surface)] border-2 border-[var(--color-border)] hover:border-[var(--color-primary)] transition-all duration-200">
       <div className="flex items-center gap-3 min-w-0 flex-1">
-        {/* Category Icon */}
+        {/* Icon (Category or Transfer) */}
         <div
           className="w-11 h-11 flex items-center justify-center text-xl flex-shrink-0 border-2 border-[var(--color-border)]"
-          style={{ backgroundColor: category ? `${category.color}20` : '#242424' }}
+          style={{
+            backgroundColor:
+              transaction.type === "transfer"
+                ? "var(--color-surface-2)"
+                : category
+                  ? `${category.color}20`
+                  : "#242424",
+            color:
+              transaction.type === "transfer"
+                ? "var(--color-transfer)"
+                : "inherit",
+          }}
         >
-          {category?.icon || '📦'}
+          {transaction.type === "transfer" ? "🔄" : category?.icon || "📦"}
         </div>
 
         {/* Main Info */}
         <div className="min-w-0 flex-1">
           {/* Description */}
           <h3 className="font-bold text-[var(--color-text-primary)] text-sm md:text-base mb-1 truncate">
-            {transaction.description || 'No description'}
+            {transaction.description || "No description"}
           </h3>
 
           {/* Chips Row */}
           <div className="flex items-center gap-1.5 flex-wrap">
-            {/* Category Chip */}
-            <span
-              className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold border"
-              style={{
-                backgroundColor: category ? `${category.color}15` : '#242424',
-                color: category?.color || 'var(--color-text-muted)',
-                borderColor: category ? `${category.color}40` : 'var(--color-border)',
-              }}
-            >
-              {category?.icon && <span className="text-xs">{category.icon}</span>}
-              {category?.name || 'Uncategorized'}
-            </span>
+            {/* Category / Transfer Chip */}
+            {transaction.type === "transfer" ? (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold border"
+                style={{
+                  backgroundColor: "var(--color-surface-2)",
+                  color: "var(--color-transfer)",
+                  borderColor: "var(--color-border)",
+                }}
+              >
+                <span className="text-xs">➡️</span>
+                {transaction.destinationAccount?.name || "Unknown Account"}
+              </span>
+            ) : (
+              <span
+                className="inline-flex items-center gap-1 px-2 py-0.5 text-[11px] font-semibold border"
+                style={{
+                  backgroundColor: category ? `${category.color}15` : "#242424",
+                  color: category?.color || "var(--color-text-muted)",
+                  borderColor: category
+                    ? `${category.color}40`
+                    : "var(--color-border)",
+                }}
+              >
+                {category?.icon && (
+                  <span className="text-xs">{category.icon}</span>
+                )}
+                {category?.name || "Uncategorized"}
+              </span>
+            )}
 
             {/* Account Chip */}
             {account && (
@@ -83,10 +110,18 @@ export default function TransactionItem({
         {/* Amount */}
         <span
           className={`font-bold text-sm md:text-base whitespace-nowrap ${
-            transaction.type === 'expense' ? 'text-[var(--color-expense)]' : 'text-[var(--color-income)]'
+            transaction.type === "transfer"
+              ? "text-[var(--color-transfer)]"
+              : transaction.type === "expense"
+                ? "text-[var(--color-expense)]"
+                : "text-[var(--color-income)]"
           }`}
         >
-          {transaction.type === 'expense' ? '-' : '+'}
+          {transaction.type === "transfer"
+            ? ""
+            : transaction.type === "expense"
+              ? "-"
+              : "+"}
           {formatCurrency(transaction.amount)}
         </span>
 

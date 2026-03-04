@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React from 'react';
+import React from "react";
 import {
   BarChart,
   Bar,
@@ -10,8 +10,8 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-} from 'recharts';
-import { useTranslation } from '@/shared/lib/i18n';
+} from "recharts";
+import { useTranslation } from "@/shared/lib/i18n";
 
 interface MonthlyDataItem {
   month: string;
@@ -24,13 +24,18 @@ interface MonthlyBarChartProps {
   title?: string;
 }
 
-export default function MonthlyBarChart({ data, title = 'Monthly Overview' }: MonthlyBarChartProps) {
+export default function MonthlyBarChart({
+  data,
+  title = "Monthly Overview",
+}: MonthlyBarChartProps) {
   const { t } = useTranslation();
   if (data.length === 0) {
     return (
       <div className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-primary)] flex flex-col items-center justify-center py-12 text-center h-full">
         <div className="text-4xl mb-3 opacity-50">📈</div>
-        <p className="text-[var(--color-text-muted)] font-bold">{t('empty.noExpenses') || 'No monthly data yet'}</p>
+        <p className="text-[var(--color-text-muted)] font-bold">
+          {t("empty.noExpenses") || "No monthly data yet"}
+        </p>
       </div>
     );
   }
@@ -46,32 +51,35 @@ export default function MonthlyBarChart({ data, title = 'Monthly Overview' }: Mo
             <CartesianGrid strokeDasharray="3 3" stroke="#2E2E2E" />
             <XAxis
               dataKey="month"
-              tick={{ fontSize: 12, fontFamily: 'inherit', fill: '#9CA3AF' }}
-              axisLine={{ stroke: '#2E2E2E' }}
+              tick={{ fontSize: 12, fontFamily: "inherit", fill: "#9CA3AF" }}
+              axisLine={{ stroke: "#2E2E2E" }}
               dy={10}
             />
             <YAxis
-              tick={{ fontSize: 12, fontFamily: 'inherit', fill: '#9CA3AF' }}
-              axisLine={{ stroke: '#2E2E2E' }}
+              tick={{ fontSize: 12, fontFamily: "inherit", fill: "#9CA3AF" }}
+              axisLine={{ stroke: "#2E2E2E" }}
               tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
               dx={-10}
             />
             <Tooltip
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               formatter={(value: any) =>
-                `฿${Number(value).toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+                `฿${Number(value).toLocaleString("en-US", { minimumFractionDigits: 2 })}`
               }
-              cursor={{ fill: '#242424' }}
+              cursor={{ fill: "var(--color-surface-2)" }}
               contentStyle={{
-                backgroundColor: '#1A1A1A',
-                border: '2px solid #2E2E2E',
-                boxShadow: '4px 4px 0px 0px #00FFAB',
-                fontFamily: 'inherit',
-                color: '#FFFFFF',
-                padding: '12px',
+                backgroundColor: "var(--color-surface)",
+                border: "2px solid var(--color-border)",
+                boxShadow: "4px 4px 0px 0px var(--color-primary)",
+                fontFamily: "inherit",
+                color: "var(--color-text-primary)",
+                padding: "12px",
               }}
             />
-            <Legend wrapperStyle={{ fontSize: '0.875rem', paddingTop: '20px' }} iconType="circle" />
+            <Legend
+              wrapperStyle={{ fontSize: "0.875rem", paddingTop: "20px" }}
+              iconType="circle"
+            />
             <Bar
               dataKey="income"
               name="💰 Income"

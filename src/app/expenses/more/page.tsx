@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
-import { Tags, Settings, ChevronRight, Upload } from 'lucide-react';
-import { useTranslation } from '@/shared/lib/i18n';
+import React from "react";
+import Link from "next/link";
+import { Tags, Settings, ChevronRight, Upload } from "lucide-react";
+import { useTranslation } from "@/shared/lib/i18n";
 
 interface PortalCard {
   href: string;
@@ -18,25 +18,18 @@ export default function MorePage() {
 
   const cards: PortalCard[] = [
     {
-      href: '/expenses/more/categories',
+      href: "/expenses/more/categories",
       icon: <Tags className="w-6 h-6 text-white" />,
-      emoji: '🏷️',
-      titleKey: 'more.categoryManagement',
-      descKey: 'more.categoryManagementDesc',
+      emoji: "🏷️",
+      titleKey: "more.categoryManagement",
+      descKey: "more.categoryManagementDesc",
     },
     {
-      href: '/expenses/upload',
-      icon: <Upload className="w-6 h-6 text-white" />,
-      emoji: '📄',
-      titleKey: 'import.title',
-      descKey: 'import.subtitle',
-    },
-    {
-      href: '/expenses/more/settings',
+      href: "/expenses/more/settings",
       icon: <Settings className="w-6 h-6 text-white" />,
-      emoji: '⚙️',
-      titleKey: 'more.settings',
-      descKey: 'more.settingsDesc',
+      emoji: "⚙️",
+      titleKey: "more.settings",
+      descKey: "more.settingsDesc",
     },
   ];
 
@@ -45,10 +38,10 @@ export default function MorePage() {
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-[var(--color-text-primary)] mb-1 font-[var(--font-brand)] uppercase tracking-wider">
-          {t('more.title')}
+          {t("more.title")}
         </h1>
         <p className="text-[var(--color-text-secondary)]">
-          {t('more.subtitle')}
+          {t("more.subtitle")}
         </p>
       </div>
 
@@ -77,9 +70,9 @@ export default function MorePage() {
               </div>
 
               {/* Arrow */}
-              <ChevronRight 
-                size={20} 
-                className="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] group-hover:translate-x-0.5 transition-all mt-1 shrink-0" 
+              <ChevronRight
+                size={20}
+                className="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)] group-hover:translate-x-0.5 transition-all mt-1 shrink-0"
               />
             </div>
           </Link>
@@ -89,7 +82,7 @@ export default function MorePage() {
       {/* App info */}
       <div className="pt-4 text-center">
         <p className="text-xs text-[var(--color-text-muted)] font-medium">
-          ออมเก่ง v0.1.0 • {t('app.footer')}
+          ออมเก่ง v0.1.0 • {t("app.footer")}
         </p>
       </div>
     </div>
