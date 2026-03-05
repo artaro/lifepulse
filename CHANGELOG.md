@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.1.2](https://github.com/artaro/lifepulse/compare/v0.1.1...v0.1.2) (2026-03-05)
+
+
+### Features
+
+* improve statement parsing transaction type classification and enhance accounts page summary with credit utilization display. ([ef1d74f](https://github.com/artaro/lifepulse/commit/ef1d74f7e1e5229c3a8f603575161113e8c4f4d2))
+
 ## [0.1.1](https://github.com/artaro/lifepulse/compare/v0.1.0...v0.1.1) (2026-03-04)
 
 
