@@ -7,6 +7,7 @@ import { formatCurrency, toLocalDateString } from "@/shared/lib/formatters";
 import { useTranslation } from "@/shared/lib/i18n";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { isSameDay } from "date-fns";
+import ExpensePieChart from "./ExpensePieChart";
 
 interface CalendarPanelProps {
   transactions: Transaction[];
@@ -32,13 +33,50 @@ export default function CalendarPanel({ transactions }: CalendarPanelProps) {
 
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
+  const currentMonthStr = `${year}-${String(month + 1).padStart(2, "0")}`;
+
+  const { minMonthStr, maxMonthStr } = useMemo(() => {
+    const now = new Date();
+    const currentStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
+    if (!transactions || transactions.length === 0) {
+      return { minMonthStr: currentStr, maxMonthStr: currentStr };
+    }
+    const dates = transactions.map((t) => toLocalDateString(t.transactionDate));
+    let minStr = dates.reduce((a, b) => (a < b ? a : b)).substring(0, 7);
+    let maxStr = dates.reduce((a, b) => (a > b ? a : b)).substring(0, 7);
+
+    if (currentStr < minStr) minStr = currentStr;
+    if (currentStr > maxStr) maxStr = currentStr;
+
+    return {
+      minMonthStr: minStr,
+      maxMonthStr: maxStr,
+    };
+  }, [transactions]);
+
+  const canGoPrev = useMemo(() => {
+    const prevMonthDate = new Date(year, month - 1, 1);
+    const prevMonthStr = `${prevMonthDate.getFullYear()}-${String(prevMonthDate.getMonth() + 1).padStart(2, "0")}`;
+    return prevMonthStr >= minMonthStr;
+  }, [year, month, minMonthStr]);
+
+  const canGoNext = useMemo(() => {
+    const nextMonthDate = new Date(year, month + 1, 1);
+    const nextMonthStr = `${nextMonthDate.getFullYear()}-${String(nextMonthDate.getMonth() + 1).padStart(2, "0")}`;
+    return nextMonthStr <= maxMonthStr;
+  }, [year, month, maxMonthStr]);
 
   const handlePrevMonth = () => {
-    setCurrentDate(new Date(year, month - 1, 1));
+    if (canGoPrev) {
+      setCurrentDate(new Date(year, month - 1, 1));
+    }
   };
 
   const handleNextMonth = () => {
-    setCurrentDate(new Date(year, month + 1, 1));
+    if (canGoNext) {
+      setCurrentDate(new Date(year, month + 1, 1));
+    }
   };
 
   // Generate calendar grid days
@@ -103,13 +141,31 @@ export default function CalendarPanel({ transactions }: CalendarPanelProps) {
       : `rgba(214, 48, 49, ${Math.min(Math.abs(value) / 2000, 1)})`;
   };
 
+  const getDaysInMonthForAvg = () => {
+    const now = new Date();
+    if (year === now.getFullYear() && month === now.getMonth()) {
+      return now.getDate() || 1;
+    }
+    return new Date(year, month + 1, 0).getDate();
+  };
+  const dividerDays = getDaysInMonthForAvg();
+
   return (
-    <div className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-primary)] p-6">
+    <div className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-primary)] p-6 flex flex-col">
+      <h2 className="text-xl font-bold text-[var(--color-text-primary)] font-[var(--font-brand)] uppercase tracking-wider mb-6">
+        {language === "th" ? "ภาพรวมรายเดือน" : "Monthly Overview"}
+      </h2>
+
       <div className="flex items-center justify-between mb-6 flex-wrap gap-4">
         <div className="flex items-center gap-2">
           <button
             onClick={handlePrevMonth}
-            className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] border-2 border-[var(--color-border)] transition-colors"
+            disabled={!canGoPrev}
+            className={`p-1 border-2 transition-colors ${
+              canGoPrev
+                ? "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] border-[var(--color-border)]"
+                : "text-[var(--color-border)] border-[var(--color-surface-2)] opacity-50 cursor-not-allowed"
+            }`}
           >
             <ChevronLeft size={20} />
           </button>
@@ -121,7 +177,12 @@ export default function CalendarPanel({ transactions }: CalendarPanelProps) {
           </h3>
           <button
             onClick={handleNextMonth}
-            className="p-1 text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] border-2 border-[var(--color-border)] transition-colors"
+            disabled={!canGoNext}
+            className={`p-1 border-2 transition-colors ${
+              canGoNext
+                ? "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-2)] border-[var(--color-border)]"
+                : "text-[var(--color-border)] border-[var(--color-surface-2)] opacity-50 cursor-not-allowed"
+            }`}
           >
             <ChevronRight size={20} />
           </button>
@@ -218,6 +279,19 @@ export default function CalendarPanel({ transactions }: CalendarPanelProps) {
             </div>
           );
         })}
+      </div>
+
+      {/* Pie Chart & Category Details Below Calendar */}
+      <div className="mt-6 pt-4 border-t-2 border-[var(--color-border)]">
+        <h3 className="text-sm lg:text-base font-bold text-[var(--color-text-primary)] font-[var(--font-brand)] uppercase tracking-wider mb-2">
+          {t("chart.spendingByCategory")}
+        </h3>
+        <ExpensePieChart
+          transactions={transactions}
+          currentMonthStr={currentMonthStr}
+          dividerDays={dividerDays}
+          embedded={true}
+        />
       </div>
     </div>
   );

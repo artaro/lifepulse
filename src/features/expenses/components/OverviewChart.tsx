@@ -24,23 +24,56 @@ export default function OverviewChart({ transactions }: OverviewChartProps) {
   const { t, language } = useTranslation();
   const data = useMemo(() => {
     const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth();
+
+    let minYear = currentYear;
+    let minMonth = currentMonth - 5; // Default at least 6 months
+
+    if (transactions && transactions.length > 0) {
+      const dates = transactions.map((t) => new Date(t.transactionDate));
+      const earliest = new Date(Math.min(...dates.map((d) => d.getTime())));
+      const eYear = earliest.getFullYear();
+      const eMonth = earliest.getMonth();
+      if (eYear < minYear || (eYear === minYear && eMonth < minMonth)) {
+        minYear = eYear;
+        // Do not jump minMonth based on year-shift, accurately reflect earliest absolute month
+        // Wait, to safely capture starting month we should just subtract relative months:
+        minMonth = eMonth;
+      }
+    }
+
     const dataMap = new Map<
       string,
       { label: string; income: number; expense: number; date: Date }
     >();
 
-    // Last 6 months
-    for (let i = 5; i >= 0; i--) {
-      const d = new Date(today.getFullYear(), today.getMonth() - i, 1);
+    let y = minYear;
+    let m = minMonth;
+
+    while (m < 0) {
+      m += 12;
+      y -= 1;
+    }
+
+    // Generate chronological months up to current
+    while (y < currentYear || (y === currentYear && m <= currentMonth)) {
+      const d = new Date(y, m, 1);
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
       dataMap.set(key, {
         label: d.toLocaleString(language === "th" ? "th-TH" : "en-US", {
           month: "short",
+          year: d.getFullYear() !== currentYear ? "2-digit" : undefined,
         }),
         income: 0,
         expense: 0,
         date: d,
       });
+      m++;
+      if (m > 11) {
+        m = 0;
+        y++;
+      }
     }
 
     transactions.forEach((t) => {
@@ -51,6 +84,18 @@ export default function OverviewChart({ transactions }: OverviewChartProps) {
         const entry = dataMap.get(key)!;
         if (t.type === TransactionType.INCOME) entry.income += t.amount;
         else entry.expense += t.amount;
+      } else {
+        // Handle future transactions
+        const d = new Date(t.transactionDate);
+        dataMap.set(key, {
+          label: d.toLocaleString(language === "th" ? "th-TH" : "en-US", {
+            month: "short",
+            year: d.getFullYear() !== currentYear ? "2-digit" : undefined,
+          }),
+          income: t.type === TransactionType.INCOME ? t.amount : 0,
+          expense: t.type === TransactionType.EXPENSE ? t.amount : 0,
+          date: d,
+        });
       }
     });
 

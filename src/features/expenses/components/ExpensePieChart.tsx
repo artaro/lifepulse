@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import {
   PieChart,
   Pie,
@@ -13,24 +13,34 @@ import { Transaction } from "@/features/expenses/types";
 import { TransactionType } from "@/features/expenses/types";
 import { formatCurrency, toLocalDateString } from "@/shared/lib/formatters";
 import { useTranslation } from "@/shared/lib/i18n";
-import { format } from "date-fns";
 
 interface ExpensePieChartProps {
   transactions: Transaction[];
+  currentMonthStr?: string; // Format: "YYYY-MM"
+  dividerDays?: number;
+  embedded?: boolean;
 }
 
 export default function ExpensePieChart({
   transactions,
+  currentMonthStr,
+  dividerDays,
+  embedded = false,
 }: ExpensePieChartProps) {
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const filteredData = useMemo(() => {
-    const now = new Date();
-    const startOfMonthStr = format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd');
+    let focusMonthStr = currentMonthStr;
+    if (!focusMonthStr) {
+      const now = new Date();
+      focusMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    }
 
     const filtered = transactions.filter(
       (t) =>
         t.type === TransactionType.EXPENSE &&
-        toLocalDateString(t.transactionDate) >= startOfMonthStr,
+        toLocalDateString(t.transactionDate).startsWith(focusMonthStr!),
     );
 
     const categoryMap = new Map<string, number>();
@@ -54,9 +64,8 @@ export default function ExpensePieChart({
         color: colorMap.get(name) || "#B2BEC3",
         icon: iconMap.get(name) || "❓",
       }))
-      .sort((a, b) => b.value - a.value)
-      .slice(0, 6);
-  }, [transactions]);
+      .sort((a, b) => b.value - a.value);
+  }, [transactions, currentMonthStr]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const renderLegendText = (value: string, entry: any) => {
@@ -69,29 +78,37 @@ export default function ExpensePieChart({
     );
   };
 
-  const dayOfMonth = new Date().getDate();
+  const days = dividerDays || new Date().getDate() || 1;
+
+  const containerClass = embedded
+    ? "flex flex-col pt-2"
+    : "bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-primary)] p-6 flex flex-col";
+
+  const displayedData = isExpanded ? filteredData : filteredData.slice(0, 3);
 
   return (
-    <div className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-primary)] p-6 h-full flex flex-col">
-      <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-[var(--font-brand)] uppercase tracking-wider mb-4">
-        {t("chart.spendingByCategory")}
-      </h3>
+    <div className={containerClass}>
+      {!embedded && (
+        <h3 className="text-lg font-bold text-[var(--color-text-primary)] font-[var(--font-brand)] uppercase tracking-wider mb-4">
+          {t("chart.spendingByCategory")}
+        </h3>
+      )}
 
       {filteredData.length > 0 ? (
         <>
-          <div className="flex-grow min-h-[220px]">
+          <div className="h-[200px] w-full mb-2">
             <ResponsiveContainer width="100%" height="100%" minWidth={0}>
               <PieChart>
                 <Pie
-                  data={filteredData}
+                  data={filteredData.slice(0, 6)}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
-                  outerRadius={80}
+                  innerRadius={50}
+                  outerRadius={70}
                   paddingAngle={5}
                   dataKey="value"
                 >
-                  {filteredData.map((entry, index) => (
+                  {filteredData.slice(0, 6).map((entry, index) => (
                     <Cell
                       key={`cell-${index}`}
                       fill={entry.color}
@@ -126,24 +143,49 @@ export default function ExpensePieChart({
           </div>
 
           {/* Daily Averages Box */}
-          <div className="mt-4 pt-4 border-t-2 border-[var(--color-border)]">
-            <p className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider mb-3">
-              {t("chart.avgExpense")}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {filteredData.slice(0, 4).map((item) => (
+          <div className="mt-2 pt-4 border-t-2 border-[var(--color-border)]">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-xs font-bold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                {t("chart.avgExpense")}
+              </p>
+              {filteredData.length > 3 && (
+                <button
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-[10px] font-bold text-[var(--color-primary)] uppercase hover:bg-[var(--color-primary)]/10 px-2 py-1 transition-colors border border-transparent hover:border-[var(--color-primary)]"
+                >
+                  {isExpanded
+                    ? language === "th"
+                      ? "ย่อลง"
+                      : "See less"
+                    : language === "th"
+                      ? "ดูทั้งหมด"
+                      : "See all"}
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              {displayedData.map((item) => (
                 <div
                   key={item.name}
-                  className="bg-[var(--color-surface-2)] border-2 border-[var(--color-border)] p-2.5 flex items-center justify-between"
+                  className="bg-[var(--color-surface-2)] border-2 border-[var(--color-border)] p-2 flex items-center justify-between"
                 >
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <span className="text-sm">{item.icon}</span>
-                    <span className="text-xs font-bold text-[var(--color-text-primary)] truncate">
+                  <div className="flex items-center gap-1.5 min-w-0 pr-1">
+                    <div
+                      className="w-6 h-6 flex items-center justify-center text-xs flex-shrink-0 border border-[var(--color-border)]"
+                      style={{
+                        backgroundColor: `${item.color}20`,
+                        color: "inherit",
+                      }}
+                    >
+                      {item.icon}
+                    </div>
+                    <span className="text-[10px] font-bold text-[var(--color-text-primary)] truncate">
                       {item.name}
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-[var(--color-text-primary)]">
-                    ~{formatCurrency(item.value / dayOfMonth)}
+                  <span className="text-[10px] font-bold text-[var(--color-text-primary)] whitespace-nowrap">
+                    ~{formatCurrency(item.value / days)}/d
                   </span>
                 </div>
               ))}
@@ -152,7 +194,7 @@ export default function ExpensePieChart({
         </>
       ) : (
         <div className="flex-grow flex flex-col items-center justify-center min-h-[300px] text-center">
-          <div className="text-5xl mb-3 opacity-50">📉</div>
+          <div className="text-4xl mb-3 opacity-50">📉</div>
           <p className="text-[var(--color-text-muted)] font-bold">
             {t("empty.noExpenses")}
           </p>
