@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import { Trash2 } from "lucide-react";
+import { Trash2, HelpCircle } from "lucide-react";
 import { Category } from "@/features/expenses/types";
 import { formatCurrency, formatDate } from "@/shared/lib/formatters";
 import { useTranslation } from "@/shared/lib/i18n";
@@ -16,8 +16,8 @@ interface ImportPreviewCardsProps {
   categories: Category[];
   selectedIndices: Set<number>;
   onSelectOne: (index: number) => void;
-  onSelectAllOfType: (type: "income" | "expense", indices: number[]) => void;
-  selectedType: "income" | "expense" | null;
+  onSelectAllOfType: (type: "income" | "expense" | "", indices: number[]) => void;
+  selectedType: "income" | "expense" | "" | null;
 }
 
 export default function ImportPreviewCards({
@@ -32,6 +32,7 @@ export default function ImportPreviewCards({
   const { t } = useTranslation();
   const [expensePage, setExpensePage] = useState(1);
   const [incomePage, setIncomePage] = useState(1);
+  const [untypedPage, setUntypedPage] = useState(1);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     type: "single";
     index: number;
@@ -49,6 +50,13 @@ export default function ImportPreviewCards({
       transactions
         .map((tx, idx) => ({ tx, idx }))
         .filter(({ tx }) => tx.type === "income"),
+    [transactions],
+  );
+  const untypedTransactions = useMemo(
+    () =>
+      transactions
+        .map((tx, idx) => ({ tx, idx }))
+        .filter(({ tx }) => tx.type === ""),
     [transactions],
   );
 
@@ -74,6 +82,7 @@ export default function ImportPreviewCards({
     expenseTransactions.length / ROWS_PER_PAGE,
   );
   const incomePageCount = Math.ceil(incomeTransactions.length / ROWS_PER_PAGE);
+  const untypedPageCount = Math.ceil(untypedTransactions.length / ROWS_PER_PAGE);
 
   const pagedExpenses = expenseTransactions.slice(
     (expensePage - 1) * ROWS_PER_PAGE,
@@ -82,6 +91,10 @@ export default function ImportPreviewCards({
   const pagedIncomes = incomeTransactions.slice(
     (incomePage - 1) * ROWS_PER_PAGE,
     incomePage * ROWS_PER_PAGE,
+  );
+  const pagedUntyped = untypedTransactions.slice(
+    (untypedPage - 1) * ROWS_PER_PAGE,
+    untypedPage * ROWS_PER_PAGE,
   );
 
   const updateTransaction = (
@@ -120,8 +133,9 @@ export default function ImportPreviewCards({
   ) => {
     const isSelected = selectedIndices.has(globalIndex);
     const cat = categories.find((c) => c.id === tx.category);
+    const isUntyped = tx.type === "";
 
-    const isOtherType = selectedType && selectedType !== tx.type;
+    const isOtherType = selectedType !== null && selectedType !== tx.type;
 
     const blurClass = isOtherType
       ? "blur-[2px] opacity-40 pointer-events-none grayscale"
@@ -132,7 +146,14 @@ export default function ImportPreviewCards({
         key={globalIndex}
         className={`
           group grid grid-cols-[auto_auto_1fr_auto] md:flex md:items-center gap-x-3 gap-y-1.5 px-4 py-3 border-2 transition-all duration-200
-          ${isSelected ? "bg-[var(--color-primary)]/10 border-[var(--color-primary)]" : "bg-[var(--color-surface)] border-[var(--color-border)] hover:bg-[var(--color-surface-2)]"}
+          ${isUntyped
+            ? isSelected
+              ? "bg-[var(--color-secondary)]/10 border-[var(--color-secondary)]"
+              : "bg-[var(--color-secondary)]/5 border-dashed border-[var(--color-secondary)]/50 hover:border-[var(--color-secondary)]"
+            : isSelected
+              ? "bg-[var(--color-primary)]/10 border-[var(--color-primary)]"
+              : "bg-[var(--color-surface)] border-[var(--color-border)] hover:bg-[var(--color-surface-2)]"
+          }
           ${blurClass}
         `}
       >
@@ -144,31 +165,47 @@ export default function ImportPreviewCards({
           className="row-span-2 md:row-span-1 w-4 h-4 border-2 border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-primary)] focus:ring-[var(--color-primary)] cursor-pointer flex-shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         />
 
-        {/* Category Select */}
-        <div className="row-span-2 md:row-span-1 flex-shrink-0 relative group/cat">
-          <div
-            className="w-10 h-10 border-2 border-[var(--color-border)] flex items-center justify-center text-xl transition-colors"
-            style={{ backgroundColor: cat ? `${cat.color}20` : "#242424" }}
-          >
-            {cat?.icon || "📦"}
+        {/* Type selector for untyped transactions */}
+        {isUntyped ? (
+          <div className="row-span-2 md:row-span-1 flex-shrink-0 relative">
+            <select
+              value={tx.type}
+              onChange={(e) => updateTransaction(globalIndex, "type", e.target.value)}
+              className="w-10 h-10 border-2 border-dashed border-[var(--color-secondary)] bg-[var(--color-secondary)]/10 text-[var(--color-secondary)] text-xs font-bold cursor-pointer appearance-none text-center focus:ring-0 focus:border-[var(--color-primary)]"
+              title={t("import.selectType")}
+            >
+              <option value="">?</option>
+              <option value="expense">{t("transactions.expense")}</option>
+              <option value="income">{t("transactions.income")}</option>
+            </select>
           </div>
-          <select
-            value={tx.category || ""}
-            onChange={(e) =>
-              updateTransaction(globalIndex, "category", e.target.value)
-            }
-            disabled={!!isOtherType}
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
-            title={t("txForm.selectCategory")}
-          >
-            <option value="">{t("import.uncategorized")}</option>
-            {typedCategories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.icon} {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        ) : (
+          /* Category Select */
+          <div className="row-span-2 md:row-span-1 flex-shrink-0 relative group/cat">
+            <div
+              className="w-10 h-10 border-2 border-[var(--color-border)] flex items-center justify-center text-xl transition-colors"
+              style={{ backgroundColor: cat ? `${cat.color}20` : "#242424" }}
+            >
+              {cat?.icon || "📦"}
+            </div>
+            <select
+              value={tx.category || ""}
+              onChange={(e) =>
+                updateTransaction(globalIndex, "category", e.target.value)
+              }
+              disabled={!!isOtherType}
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              title={t("txForm.selectCategory")}
+            >
+              <option value="">{t("import.uncategorized")}</option>
+              {typedCategories.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.icon} {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
 
         {/* Description */}
         <input
@@ -184,12 +221,14 @@ export default function ImportPreviewCards({
         {/* Amount */}
         <div
           className={`col-start-4 md:col-auto justify-self-end md:justify-self-auto text-sm font-bold whitespace-nowrap text-right min-w-[80px] md:min-w-[90px] tracking-tight ${
-            tx.type === "expense"
-              ? "text-[var(--color-expense)]"
-              : "text-[var(--color-income)]"
+            isUntyped
+              ? "text-[var(--color-secondary)]"
+              : tx.type === "expense"
+                ? "text-[var(--color-expense)]"
+                : "text-[var(--color-income)]"
           }`}
         >
-          {tx.type === "expense" ? "-" : "+"}
+          {isUntyped ? "" : tx.type === "expense" ? "-" : "+"}
           {formatCurrency(tx.amount)}
         </div>
 
@@ -225,7 +264,7 @@ export default function ImportPreviewCards({
     page: number,
     onPageChange: (p: number) => void,
     label: string,
-    type: "income" | "expense",
+    type: "income" | "expense" | "",
   ) => {
     const allIndices = allItems.map((i) => i.idx);
     const allSelected =
@@ -235,7 +274,7 @@ export default function ImportPreviewCards({
       pageIndices.length > 0 &&
       pageIndices.every((i) => selectedIndices.has(i));
 
-    const isOtherType = selectedType && selectedType !== type;
+    const isOtherType = selectedType !== null && selectedType !== type;
 
     return (
       <div
@@ -298,10 +337,43 @@ export default function ImportPreviewCards({
 
   return (
     <div className={`pb-24 ${selectedIndices.size > 0 ? "mb-16" : ""}`}>
+      {/* Untyped — shown first with warning styling */}
+      {untypedTransactions.length > 0 && (
+        <div
+          className={`mb-6 transition-all duration-300 ${selectedType === "income" || selectedType === "expense" ? "grayscale opacity-50" : ""}`}
+        >
+          <div className="flex items-center justify-between mb-2 px-2">
+            <div className="flex items-center gap-2">
+              <HelpCircle className="w-4 h-4 text-[var(--color-secondary)]" />
+              <h3 className="font-bold text-[var(--color-secondary)] font-[var(--font-brand)] tracking-wide">
+                {t("import.untypedSection")} ({untypedTransactions.length})
+              </h3>
+            </div>
+            <span className="px-2 py-0.5 border-2 border-dashed border-[var(--color-secondary)] bg-[var(--color-secondary)]/10 text-[var(--color-secondary)] text-xs font-bold tracking-widest">
+              {t("import.needsType")}
+            </span>
+          </div>
+          {renderSectionHeader(
+            untypedTransactions,
+            pagedUntyped,
+            untypedPageCount,
+            untypedPage,
+            setUntypedPage,
+            t("import.untypedSection").toLowerCase(),
+            "",
+          )}
+          <div className="space-y-4">
+            {pagedUntyped.map(({ tx, idx }) =>
+              renderRow(tx, idx, []),
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Income */}
       {incomeTransactions.length > 0 && (
         <div
-          className={`mb-6 transition-all duration-300 ${selectedType === "expense" ? "grayscale opacity-50" : ""}`}
+          className={`mb-6 transition-all duration-300 ${selectedType === "expense" || selectedType === "" ? "grayscale opacity-50" : ""}`}
         >
           <div className="flex items-center justify-between mb-2 px-2">
             <div className="flex items-center gap-2">
@@ -334,7 +406,7 @@ export default function ImportPreviewCards({
       {/* Expenses */}
       {expenseTransactions.length > 0 && (
         <div
-          className={`mb-6 transition-all duration-300 ${selectedType === "income" ? "grayscale opacity-50" : ""}`}
+          className={`mb-6 transition-all duration-300 ${selectedType === "income" || selectedType === "" ? "grayscale opacity-50" : ""}`}
         >
           <div className="flex items-center justify-between mb-2 px-2">
             <div className="flex items-center gap-2">

@@ -1,13 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus,
   Edit2,
   Trash2,
   Lock,
   Pin,
-  X
+  X,
+  Pipette,
 } from 'lucide-react';
 import { DEFAULT_CATEGORIES } from '@/features/expenses/constants';
 import { ConfirmDialog } from '@/shared/components';
@@ -21,15 +22,13 @@ import {
 import { Category } from '@/features/expenses/types';
 import { TransactionType } from '@/features/expenses/types';
 import { useTranslation } from '@/shared/lib/i18n';
+import EmojiPicker from '@/features/expenses/components/EmojiPicker';
 
-const EMOJI_OPTIONS = [
-  '🍔', '🚗', '🛍️', '🎮', '💡', '💊', '📚', '💰', '🔄', '📦', 
-  '☕', '✈️', '🏠', '💻', '👕', '🎬', '🏋️', '🎵', '🐾', '🎁', '❓'
-];
-
-const COLOR_OPTIONS = [
+const COLOR_PRESETS = [
   '#FF7675', '#74B9FF', '#FD79A8', '#6C5CE7', '#FDCB6E', '#55EFC4',
   '#00B894', '#0984E3', '#E17055', '#A29BFE', '#E84393', '#636E72',
+  '#00FFAB', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
+  '#DDA0DD', '#F0E68C', '#98FB98', '#87CEEB',
 ];
 
 export default function CategoriesPage() {
@@ -43,13 +42,26 @@ export default function CategoriesPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Category | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
-  
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     icon: '📦',
     color: '#00FFAB',
     type: TransactionType.EXPENSE,
   });
+
+  // Close emoji picker on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(e.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    if (showEmojiPicker) document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showEmojiPicker]);
 
   const openAddForm = (type: TransactionType) => {
     setFormData({ name: '', icon: '📦', color: '#00FFAB', type: type });
@@ -256,42 +268,88 @@ export default function CategoriesPage() {
                     {/* Icon Picker */}
                     <div>
                         <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase mb-1.5 ml-1">{t('categories.icon')}</label>
-                        <div className="flex flex-wrap gap-2">
-                             {EMOJI_OPTIONS.map((emoji) => (
-                                <button
-                                    key={emoji}
-                                    type="button"
-                                    onClick={() => setFormData({ ...formData, icon: emoji })}
-                                    className={`w-10 h-10 flex items-center justify-center text-xl transition-all border-2 ${
-                                        formData.icon === emoji 
-                                        ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10' 
-                                        : 'border-[var(--color-border)] hover:border-[var(--color-text-secondary)]'
-                                    }`}
-                                >
-                                    {emoji}
-                                </button>
-                             ))}
+                        <div className="relative" ref={emojiPickerRef}>
+                            {/* Trigger button — shows current emoji */}
+                            <button
+                                type="button"
+                                onClick={() => setShowEmojiPicker((v) => !v)}
+                                className={`w-14 h-14 flex items-center justify-center text-3xl border-2 transition-all ${
+                                    showEmojiPicker
+                                    ? 'border-[var(--color-primary)] bg-[var(--color-primary)]/10 shadow-[2px_2px_0px_0px_var(--color-primary)]'
+                                    : 'border-[var(--color-border)] hover:border-[var(--color-primary)] hover:bg-[var(--color-surface-2)]'
+                                }`}
+                                title={t('categories.icon')}
+                            >
+                                {formData.icon}
+                            </button>
+                            <p className="text-[10px] text-[var(--color-text-muted)] font-bold mt-1 ml-1 uppercase tracking-wider">
+                                {showEmojiPicker ? t('categories.clickToClose') : t('categories.clickToChange')}
+                            </p>
+
+                            {/* Emoji picker popover */}
+                            {showEmojiPicker && (
+                                <div className="absolute left-0 top-[calc(100%+8px)] z-50">
+                                    <EmojiPicker
+                                        value={formData.icon}
+                                        onChange={(emoji) => {
+                                            setFormData({ ...formData, icon: emoji });
+                                            setShowEmojiPicker(false);
+                                        }}
+                                        onClose={() => setShowEmojiPicker(false)}
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Color Picker */}
                     <div>
                         <label className="block text-xs font-bold text-[var(--color-text-secondary)] uppercase mb-1.5 ml-1">{t('categories.color')}</label>
-                        <div className="flex flex-wrap gap-2">
-                             {COLOR_OPTIONS.map((color) => (
+
+                        {/* Preview swatch + current hex */}
+                        <div className="flex items-center gap-3 mb-3">
+                            <div
+                                className="w-10 h-10 border-2 border-[var(--color-border)] flex-shrink-0"
+                                style={{ backgroundColor: formData.color }}
+                            />
+                            <span className="text-sm font-bold text-[var(--color-text-primary)] uppercase tracking-wider font-mono">
+                                {formData.color.toUpperCase()}
+                            </span>
+                        </div>
+
+                        {/* Preset swatches */}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                            {COLOR_PRESETS.map((color) => (
                                 <button
                                     key={color}
                                     type="button"
                                     onClick={() => setFormData({ ...formData, color })}
-                                    className={`w-8 h-8 transition-all border-2 ${
-                                        formData.color === color 
-                                        ? 'border-[var(--color-text-primary)] scale-110' 
-                                        : 'border-transparent hover:scale-110'
+                                    className={`w-7 h-7 transition-all border-2 flex-shrink-0 ${
+                                        formData.color.toLowerCase() === color.toLowerCase()
+                                        ? 'border-[var(--color-text-primary)] scale-110 shadow-[1px_1px_0px_0px_var(--color-border)]'
+                                        : 'border-transparent hover:scale-110 hover:border-[var(--color-border)]'
                                     }`}
                                     style={{ backgroundColor: color }}
+                                    title={color}
                                 />
-                             ))}
+                            ))}
                         </div>
+
+                        {/* Custom color input */}
+                        <label className="flex items-center gap-2 cursor-pointer group w-fit">
+                            <div className="flex items-center gap-2 px-3 py-2 border-2 border-dashed border-[var(--color-border)] hover:border-[var(--color-primary)] bg-[var(--color-surface)] transition-colors group-hover:bg-[var(--color-surface-2)]">
+                                <Pipette size={14} className="text-[var(--color-text-muted)] group-hover:text-[var(--color-primary)]" />
+                                <span className="text-xs font-bold text-[var(--color-text-secondary)] group-hover:text-[var(--color-primary)] uppercase tracking-wider">
+                                    {t('categories.customColor')}
+                                </span>
+                                <input
+                                    type="color"
+                                    value={formData.color}
+                                    onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                                    className="w-0 h-0 opacity-0 absolute"
+                                />
+                            </div>
+                        </label>
                     </div>
 
                     {/* Actions */}

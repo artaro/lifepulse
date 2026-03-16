@@ -44,17 +44,20 @@ export default function ImportDialog({
   const [showStartOverConfirm, setShowStartOverConfirm] = useState(false);
   const [showCloseConfirm, setShowCloseConfirm] = useState(false);
   const [showReview, setShowReview] = useState(false);
+  const [multiMode, setMultiMode] = useState(false);
 
   const FILL_IN_LATER_CATEGORY = "a537a81c-22b4-4d01-b24c-e56ad5ba05a6";
 
   const {
     file,
+    files,
     status,
     transactions,
     setTransactions,
     pdfPassword: password,
     setPdfPassword: setPassword,
     handleFileSelect,
+    handleFilesSelect,
     reset,
     parseWithLLM: handleParse,
     importTransactions: handleImport,
@@ -76,6 +79,7 @@ export default function ImportDialog({
     setSelectedIndices(new Set());
     setShowReview(false);
     setShowCloseConfirm(false);
+    setMultiMode(false);
     onClose();
   };
 
@@ -122,14 +126,16 @@ export default function ImportDialog({
     setSelectedIndices(next);
   };
 
-  const getSelectedType = (): "income" | "expense" | null => {
+  const getSelectedType = (): "income" | "expense" | "" | null => {
     if (selectedIndices.size === 0) return null;
     const firstIdx = Array.from(selectedIndices)[0];
-    return transactions[firstIdx]?.type || null;
+    const type = transactions[firstIdx]?.type;
+    if (type === 'income' || type === 'expense' || type === '') return type;
+    return null;
   };
 
   const handleSelectAllOfType = (
-    type: "income" | "expense",
+    type: "income" | "expense" | "",
     indices: number[],
   ) => {
     const currentSelectedType = getSelectedType();
@@ -190,8 +196,10 @@ export default function ImportDialog({
   // Review summary calculations
   const reviewExpenses = transactions.filter((tx) => tx.type === "expense");
   const reviewIncomes = transactions.filter((tx) => tx.type === "income");
+  const reviewUntyped = transactions.filter((tx) => tx.type === "");
   const reviewExpenseTotal = reviewExpenses.reduce((s, tx) => s + tx.amount, 0);
   const reviewIncomeTotal = reviewIncomes.reduce((s, tx) => s + tx.amount, 0);
+  const hasUntypedTransactions = reviewUntyped.length > 0;
 
   if (!open) return null;
 
@@ -361,42 +369,95 @@ export default function ImportDialog({
         {/* ── Idle: File Upload ── */}
         {status === "idle" && (
           <div className="max-w-xl mx-auto space-y-6">
-            <FileUploadZone
-              onFileSelect={handleFileSelect}
-              selectedFile={file}
-              onClear={reset}
-            />
+            {/* Upload mode tabs */}
+            <div className="flex border-2 border-[var(--color-border)] overflow-hidden">
+              <button
+                onClick={() => { reset(); setMultiMode(false); }}
+                className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-colors border-r-2 border-[var(--color-border)] ${
+                  !multiMode
+                    ? 'bg-[var(--color-primary)] text-[var(--color-surface)]'
+                    : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-2)]'
+                }`}
+              >
+                {t("import.singleFile")}
+              </button>
+              <button
+                onClick={() => { reset(); setMultiMode(true); }}
+                className={`flex-1 py-2 text-xs font-bold uppercase tracking-wider transition-colors ${
+                  multiMode
+                    ? 'bg-[var(--color-primary)] text-[var(--color-surface)]'
+                    : 'bg-[var(--color-surface)] text-[var(--color-text-secondary)] hover:bg-[var(--color-surface-2)]'
+                }`}
+              >
+                {t("import.multiImage")}
+              </button>
+            </div>
 
-            {file && (
-              <div className="animate-fade-in space-y-4">
-                {file.type === "application/pdf" && (
-                  <div className="bg-[var(--color-secondary)]/10 border-2 border-[var(--color-secondary)] p-4 flex gap-3">
-                    <AlertCircle className="w-5 h-5 text-[var(--color-secondary)] flex-shrink-0" />
-                    <div className="space-y-2 w-full">
-                      <p className="text-sm font-bold text-[var(--color-text-primary)] tracking-wide">
-                        {t("import.passwordProtected")}
-                      </p>
-                      <input
-                        type="password"
-                        placeholder={t("import.enterPassword")}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="w-full px-3 py-2 bg-[var(--color-surface)] border-2 border-[var(--color-border)] text-sm focus:ring-0 focus:border-[var(--color-primary)] placeholder-[var(--color-text-muted)] text-[var(--color-text-primary)] font-bold"
-                      />
-                    </div>
+            {multiMode ? (
+              /* Multi-image upload zone */
+              <>
+                <FileUploadZone
+                  onFileSelect={handleFileSelect}
+                  onFilesSelect={handleFilesSelect}
+                  selectedFiles={files}
+                  multiple
+                  maxFiles={5}
+                  accept=".jpg,.jpeg,.png"
+                  onClear={reset}
+                />
+                {files.length > 0 && (
+                  <div className="animate-fade-in">
+                    <button
+                      onClick={handleParse}
+                      className="w-full py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dim)] text-[var(--color-surface)] font-bold border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-border)] transition-all active:translate-y-1 active:translate-x-1 active:shadow-[0px_0px_0px_0px_var(--color-border)] flex items-center justify-center gap-2 uppercase tracking-wider"
+                    >
+                      <FileText size={18} />
+                      {t("import.parseStatement")} ({files.length} {t("import.files")})
+                    </button>
                   </div>
                 )}
-                <button
-                  onClick={handleParse}
-                  className="w-full py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dim)] text-[var(--color-surface)] font-bold border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-border)] transition-all active:translate-y-1 active:translate-x-1 active:shadow-[0px_0px_0px_0px_var(--color-border)] flex items-center justify-center gap-2 uppercase tracking-wider"
-                >
-                  <FileText size={18} />
-                  {t("import.parseStatement")}
-                </button>
-              </div>
+              </>
+            ) : (
+              /* Single file upload zone (original) */
+              <>
+                <FileUploadZone
+                  onFileSelect={handleFileSelect}
+                  selectedFile={file}
+                  onClear={reset}
+                />
+
+                {file && (
+                  <div className="animate-fade-in space-y-4">
+                    {file.type === "application/pdf" && (
+                      <div className="bg-[var(--color-secondary)]/10 border-2 border-[var(--color-secondary)] p-4 flex gap-3">
+                        <AlertCircle className="w-5 h-5 text-[var(--color-secondary)] flex-shrink-0" />
+                        <div className="space-y-2 w-full">
+                          <p className="text-sm font-bold text-[var(--color-text-primary)] tracking-wide">
+                            {t("import.passwordProtected")}
+                          </p>
+                          <input
+                            type="password"
+                            placeholder={t("import.enterPassword")}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="w-full px-3 py-2 bg-[var(--color-surface)] border-2 border-[var(--color-border)] text-sm focus:ring-0 focus:border-[var(--color-primary)] placeholder-[var(--color-text-muted)] text-[var(--color-text-primary)] font-bold"
+                          />
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      onClick={handleParse}
+                      className="w-full py-3 bg-[var(--color-primary)] hover:bg-[var(--color-primary-dim)] text-[var(--color-surface)] font-bold border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-border)] transition-all active:translate-y-1 active:translate-x-1 active:shadow-[0px_0px_0px_0px_var(--color-border)] flex items-center justify-center gap-2 uppercase tracking-wider"
+                    >
+                      <FileText size={18} />
+                      {t("import.parseStatement")}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
 
-            {hasLastImport && !file && (
+            {hasLastImport && !file && files.length === 0 && (
               <div className="flex justify-center">
                 <button
                   onClick={loadLastImport}
@@ -456,6 +517,20 @@ export default function ImportDialog({
         {/* ── Ready: Review ── */}
         {status === "ready" && showReview && (
           <div className="animate-fade-in space-y-6">
+            {/* Untyped warning */}
+            {hasUntypedTransactions && (
+              <div className="bg-[var(--color-secondary)]/10 border-2 border-[var(--color-secondary)] p-4 flex gap-3">
+                <AlertCircle className="w-5 h-5 text-[var(--color-secondary)] flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-bold text-[var(--color-text-primary)]">
+                    {t("import.untypedWarning", { count: reviewUntyped.length })}
+                  </p>
+                  <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                    {t("import.untypedWarningDesc")}
+                  </p>
+                </div>
+              </div>
+            )}
             {/* Summary Panel */}
             <div className="grid grid-cols-2 gap-3">
               <div className="bg-[var(--color-surface)] border-2 border-[var(--color-income)] p-3">

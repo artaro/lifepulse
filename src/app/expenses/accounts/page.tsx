@@ -99,40 +99,49 @@ export default function AccountsPage() {
         </button>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] p-4 shadow-[3px_3px_0px_0px_var(--color-income)]">
-          <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1">
-            {t('accounts.totalCash')}
-          </p>
-          <p className="text-xl font-extrabold text-[var(--color-income)]">
-            {isLoading ? '...' : formatCurrency(totalCash)}
-          </p>
-          <p className="text-[10px] text-[var(--color-text-muted)]">
-            {bankAccounts.length} {t('accounts.bankAccounts').toLowerCase()}
-          </p>
-        </div>
-        <div className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] p-4 shadow-[3px_3px_0px_0px_var(--color-expense)]">
-          <p className="text-xs font-bold text-[var(--color-text-muted)] uppercase tracking-wider mb-1">
-            {t('accounts.totalDebt')}
-          </p>
-          <p className="text-xl font-extrabold text-[var(--color-expense)]">
-            {isLoading ? '...' : formatCurrency(totalDebt)}
-          </p>
-          <p className="text-[10px] text-[var(--color-text-muted)]">
-            {creditCards.length} {t('accounts.creditCards').toLowerCase()}
-          </p>
-        </div>
-        <div className="bg-[var(--color-primary)] border-2 border-[var(--color-primary)] p-4 shadow-[3px_3px_0px_0px_var(--color-border)]">
-          <p className="text-xs font-bold text-[var(--color-text-inverse)]/70 uppercase tracking-wider mb-1">
-            {t('accounts.net')}
-          </p>
-          <p className="text-xl font-extrabold text-[var(--color-text-inverse)]">
-            {isLoading ? '...' : formatCurrency(netBalance)}
-          </p>
-          <p className="text-[10px] text-[var(--color-text-inverse)]/60">
+      {/* Summary Panel — unified */}
+      <div className="bg-[var(--color-surface)] border-2 border-[var(--color-border)] shadow-[4px_4px_0px_0px_var(--color-primary)]">
+        {/* Net worth hero row */}
+        <div className="px-5 pt-4 pb-3 border-b-2 border-[var(--color-border)] flex items-center justify-between gap-4">
+          <div>
+            <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-0.5">
+              {t('accounts.netBalance')}
+            </p>
+            <p className={`text-2xl font-extrabold tracking-tight ${
+              netBalance >= 0 ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-expense)]'
+            }`}>
+              {isLoading ? '—' : formatCurrency(netBalance)}
+            </p>
+          </div>
+          <p className="text-[10px] text-[var(--color-text-muted)] font-bold uppercase tracking-wider text-right">
             {t('accounts.across', { count: accounts.length })}
           </p>
+        </div>
+
+        {/* Cash / Debt breakdown row */}
+        <div className="grid grid-cols-2 divide-x-2 divide-[var(--color-border)]">
+          <div className="px-5 py-3">
+            <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-0.5">
+              {t('accounts.totalCash')}
+            </p>
+            <p className="text-lg font-extrabold text-[var(--color-income)]">
+              {isLoading ? '—' : formatCurrency(totalCash)}
+            </p>
+            <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+              {bankAccounts.length} {t('accounts.bankAccounts').toLowerCase()}
+            </p>
+          </div>
+          <div className="px-5 py-3">
+            <p className="text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-widest mb-0.5">
+              {t('accounts.totalDebt')}
+            </p>
+            <p className="text-lg font-extrabold text-[var(--color-expense)]">
+              {isLoading ? '—' : formatCurrency(totalDebt)}
+            </p>
+            <p className="text-[10px] text-[var(--color-text-muted)] mt-0.5">
+              {creditCards.length} {t('accounts.creditCards').toLowerCase()}
+            </p>
+          </div>
         </div>
       </div>
 

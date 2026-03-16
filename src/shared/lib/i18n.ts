@@ -209,6 +209,18 @@ const translations: Record<Language, Record<string, string>> = {
         'txForm.sameAccountError': 'โอนไปบัญชีเดิมไม่ได้นะ',
         'txForm.creditCardPayment': 'ชำระหนี้บัตรเครดิต',
         'txForm.saveTransaction': 'บันทึกความรวย',
+        'txForm.smartMode': 'สมาร์ท',
+        'txForm.normalMode': 'ปกติ',
+        'txForm.smartModeDesc': 'พิมพ์อธิบายการใช้จ่าย AI จะช่วยดึงข้อมูลให้',
+        'txForm.normalModeDesc': 'กรอกข้อมูลแบบปกติ',
+        'txForm.smartInput': 'พิมพ์อธิบายรายการ',
+        'txForm.smartPlaceholder': 'เช่น "กาแฟ 65" หรือ "รับเงินเดือน 25000"',
+        'txForm.smartInfoToggle': 'สมาร์ทโหมดทำอะไรได้บ้าง?',
+        'txForm.smartInfo1': '💰 ดึงจำนวนเงินจากข้อความอัตโนมัติ',
+        'txForm.smartInfo2': '🏷️ คาดเดาหมวดหมู่จากชื่อที่คุณมี',
+        'txForm.smartInfo3': '📥📤 ตรวจจับว่าเป็นรายรับหรือรายจ่าย',
+        'txForm.smartInfo4': 'สามารถแก้ไขข้อมูลที่ดึงมาได้ในช่องด้านล่าง',
+        'txForm.adjustBelow': 'ตรวจสอบและปรับข้อมูลด้านล่าง',
 
         // ── Accounts Page ──
         'accounts.title': 'บัญชี',
@@ -262,6 +274,9 @@ const translations: Record<Language, Record<string, string>> = {
         'categories.createCategory': 'สร้างหมวดนี้',
         'categories.deleteCategory': 'ลบหมวดหมู่?',
         'categories.deleteCategoryMsg': 'ยืนยันการลบหมวดหมู่ "{name}" รายการในหมวดหมู่นี้จะยังคงอยู่ แต่จะถูกนำออกจากหมวดหมู่นี้',
+        'categories.clickToChange': 'แตะเพื่อเปลี่ยนไอคอน',
+        'categories.clickToClose': 'แตะเพื่อปิด',
+        'categories.customColor': 'สีกำหนดเอง',
 
         // ── Import ──
         'import.title': 'นำเข้าจากสลิป / ใบแจ้งยอด',
@@ -298,6 +313,14 @@ const translations: Record<Language, Record<string, string>> = {
         'import.expenseTotal': 'รายจ่ายรวม',
         'import.incomeTotal': 'รายรับรวม',
         'import.categoryBreakdown': 'แยกตามหมวด',
+        'import.singleFile': 'ไฟล์เดียว',
+        'import.multiImage': 'หลายรูป (สูงสุด 5)',
+        'import.files': 'ไฟล์',
+        'import.untypedSection': 'ไม่ระบุประเภท',
+        'import.needsType': 'กรุณาเลือกประเภท',
+        'import.selectType': 'เลือกประเภท',
+        'import.untypedWarning': 'มี {count} รายการที่ยังไม่ได้ระบุประเภท',
+        'import.untypedWarningDesc': 'รายการเหล่านี้จะไม่ถูกนำเข้า กรุณากลับไปเลือกประเภทให้ครบ',
 
         // ── Error Messages ──
         'error.pdfPassword': 'PDF มีรหัสผ่าน กรุณาระบุรหัสผ่านก่อน',
@@ -526,6 +549,18 @@ const translations: Record<Language, Record<string, string>> = {
         'txForm.sameAccountError': 'Can\'t transfer to the same account',
         'txForm.creditCardPayment': 'This pays off your credit card balance',
         'txForm.saveTransaction': 'Save It',
+        'txForm.smartMode': 'Smart',
+        'txForm.normalMode': 'Normal',
+        'txForm.smartModeDesc': 'Type a description and let the app fill in the details',
+        'txForm.normalModeDesc': 'Fill in the form manually',
+        'txForm.smartInput': 'Describe the transaction',
+        'txForm.smartPlaceholder': 'e.g. "coffee 65" or "received salary 25000"',
+        'txForm.smartInfoToggle': 'What can Smart mode do?',
+        'txForm.smartInfo1': '💰 Auto-detects the amount from your text',
+        'txForm.smartInfo2': '🏷️ Predicts the category from your category names',
+        'txForm.smartInfo3': '📥📤 Detects income vs expense from keywords',
+        'txForm.smartInfo4': 'You can always adjust the detected fields below.',
+        'txForm.adjustBelow': 'Review and adjust below',
 
         // ── Accounts Page ──
         'accounts.title': 'Accounts',
@@ -579,6 +614,9 @@ const translations: Record<Language, Record<string, string>> = {
         'categories.createCategory': 'Create Category',
         'categories.deleteCategory': 'Delete Category?',
         'categories.deleteCategoryMsg': 'Deleting "{name}" — transactions won\'t be deleted, just uncategorized.',
+        'categories.clickToChange': 'Click to change icon',
+        'categories.clickToClose': 'Click to close',
+        'categories.customColor': 'Custom color',
 
         // ── Import ──
         'import.title': 'Import from Slip / Statement',
@@ -615,6 +653,14 @@ const translations: Record<Language, Record<string, string>> = {
         'import.expenseTotal': 'Total Out',
         'import.incomeTotal': 'Total In',
         'import.categoryBreakdown': 'By Category',
+        'import.singleFile': 'Single File',
+        'import.multiImage': 'Multi Image (max 5)',
+        'import.files': 'files',
+        'import.untypedSection': 'Unrecognized',
+        'import.needsType': 'Needs type',
+        'import.selectType': 'Select type',
+        'import.untypedWarning': '{count} transactions have no type assigned',
+        'import.untypedWarningDesc': 'These will be skipped during import. Go back and assign a type to include them.',
 
         // ── Error Messages ──
         'error.pdfPassword': 'This PDF needs a password — enter it above',

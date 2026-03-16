@@ -8,13 +8,14 @@ import { compressImage } from '@/shared/lib/imageUtils';
 import { toLocalISOString } from '@/shared/lib/formatters';
 
 const LAST_IMPORT_KEY = 'aomkeng_last_import';
+const MAX_IMAGE_FILES = 5;
 
 export interface ParsedLLMTransaction {
     date: string;
     time?: string;
     description: string;
     amount: number;
-    type: 'income' | 'expense';
+    type: 'income' | 'expense' | '';
     category?: string; // For manual category assignment in UI
 }
 
@@ -31,12 +32,14 @@ type ImportStatus =
 interface UseStatementImportReturn {
     status: ImportStatus;
     file: File | null;
+    files: File[];
     transactions: ParsedLLMTransaction[];
     setTransactions: React.Dispatch<React.SetStateAction<ParsedLLMTransaction[]>>;
     error: string | null;
     pdfPassword: string;
     setPdfPassword: (pw: string) => void;
     handleFileSelect: (file: File) => void;
+    handleFilesSelect: (files: File[]) => void;
     parseWithLLM: () => Promise<void>;
     importTransactions: (accountId: string) => Promise<void>;
     loadLastImport: () => void;
@@ -51,6 +54,7 @@ interface UseStatementImportReturn {
 export function useStatementImport(): UseStatementImportReturn {
     const [status, setStatus] = useState<ImportStatus>('idle');
     const [file, setFile] = useState<File | null>(null);
+    const [files, setFiles] = useState<File[]>([]);
     const [fileType, setFileType] = useState<'document' | 'image'>('document');
     const [transactions, setTransactions] = useState<ParsedLLMTransaction[]>([]);
     const [error, setError] = useState<string | null>(null);
@@ -69,6 +73,7 @@ export function useStatementImport(): UseStatementImportReturn {
 
     const handleFileSelect = useCallback((selectedFile: File) => {
         setFile(selectedFile);
+        setFiles([]);
         setFileType(selectedFile.type.startsWith('image/') ? 'image' : 'document');
         setTransactions([]);
         setError(null);
@@ -76,8 +81,26 @@ export function useStatementImport(): UseStatementImportReturn {
         setStatus('idle');
     }, []);
 
+    const handleFilesSelect = useCallback((selectedFiles: File[]) => {
+        const imageFiles = selectedFiles
+            .filter(f => f.type.startsWith('image/'))
+            .slice(0, MAX_IMAGE_FILES);
+        if (imageFiles.length === 0) return;
+
+        setFiles(imageFiles);
+        setFile(imageFiles[0]); // Keep first file for backward compat
+        setFileType('image');
+        setTransactions([]);
+        setError(null);
+        setPdfPassword('');
+        setStatus('idle');
+    }, []);
+
     const parseWithLLM = useCallback(async () => {
-        if (!file) {
+        const isMultiFile = files.length > 1;
+        const targetFile = isMultiFile ? null : file;
+
+        if (!targetFile && !isMultiFile) {
             setError('No file selected');
             return;
         }
@@ -91,65 +114,114 @@ export function useStatementImport(): UseStatementImportReturn {
             // Step 1: Prepare data
             setStatus('parsing'); // Use parsing status immediately to show loader
 
+            if (isMultiFile) {
+                // Multi-file: send each image separately and combine results
+                const allTransactions: ParsedLLMTransaction[] = [];
 
-            // Compress if image to avoid payload limits (common on mobile)
-            let fileToUpload = file;
-            if (file.type.startsWith('image/')) {
-                try {
-                    fileToUpload = await compressImage(file);
-                } catch (e) {
-                    console.warn('Image compression failed, trying original', e);
+                for (const imageFile of files) {
+                    let fileToUpload = imageFile;
+                    try {
+                        fileToUpload = await compressImage(imageFile);
+                    } catch (e) {
+                        console.warn('Image compression failed, trying original', e);
+                    }
+
+                    const formData = new FormData();
+                    formData.append('file', fileToUpload);
+
+                    const response = await fetch('/api/parse-statement', {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    if (!response.ok) {
+                        const err = await response.json();
+                        console.warn(`Failed to parse ${imageFile.name}:`, err.error);
+                        // Continue with other files instead of failing entirely
+                        continue;
+                    }
+
+                    const data = await response.json();
+                    if (data.transactions && data.transactions.length > 0) {
+                        allTransactions.push(...data.transactions);
+                    }
                 }
-            }
 
-            const formData = new FormData();
-            formData.append('file', fileToUpload);
-            if (pdfPassword) {
-                formData.append('password', pdfPassword);
-            }
-
-            // Step 2: Send to LLM API
-            const response = await fetch('/api/parse-statement', {
-                method: 'POST',
-                body: formData,
-            });
-
-            if (!response.ok) {
-                const err = await response.json();
-
-                // Handle password required
-                if (response.status === 401 && err.code === 'PASSWORD_REQUIRED') {
-                    setStatus('needs_password');
-                    setError(pdfPassword ? 'Incorrect password' : 'PDF is password protected');
+                if (allTransactions.length === 0) {
+                    setError('No transactions found in any of the uploaded files');
+                    setStatus('error');
                     return;
                 }
 
-                throw new Error(err.error || 'Failed to parse statement');
+                setTransactions(allTransactions);
+                setStatus('ready');
+                setError(null);
+
+                // Persist to localStorage for recovery
+                try {
+                    localStorage.setItem(LAST_IMPORT_KEY, JSON.stringify(allTransactions));
+                    setHasLastImport(true);
+                } catch { /* quota exceeded, ignore */ }
+            } else {
+                // Single file flow (existing behavior)
+                let fileToUpload = targetFile!;
+                if (targetFile!.type.startsWith('image/')) {
+                    try {
+                        fileToUpload = await compressImage(targetFile!);
+                    } catch (e) {
+                        console.warn('Image compression failed, trying original', e);
+                    }
+                }
+
+                const formData = new FormData();
+                formData.append('file', fileToUpload);
+                if (pdfPassword) {
+                    formData.append('password', pdfPassword);
+                }
+
+                // Step 2: Send to LLM API
+                const response = await fetch('/api/parse-statement', {
+                    method: 'POST',
+                    body: formData,
+                });
+
+                if (!response.ok) {
+                    const err = await response.json();
+
+                    // Handle password required
+                    if (response.status === 401 && err.code === 'PASSWORD_REQUIRED') {
+                        setStatus('needs_password');
+                        setError(pdfPassword ? 'Incorrect password' : 'PDF is password protected');
+                        return;
+                    }
+
+                    throw new Error(err.error || 'Failed to parse statement');
+                }
+
+                const data = await response.json();
+
+                if (!data.transactions || data.transactions.length === 0) {
+                    setError('No transactions found in the file');
+                    setStatus('error');
+                    return;
+                }
+
+                setTransactions(data.transactions);
+                setStatus('ready');
+                setError(null);
+
+                // Persist to localStorage for recovery
+                try {
+                    localStorage.setItem(LAST_IMPORT_KEY, JSON.stringify(data.transactions));
+                    setHasLastImport(true);
+                } catch { /* quota exceeded, ignore */ }
             }
-
-            const data = await response.json();
-
-            if (!data.transactions || data.transactions.length === 0) {
-                setError('No transactions found in the file');
-                setStatus('error');
-                return;
-            }
-
-            setTransactions(data.transactions);
-            setStatus('ready');
-            setError(null);
-
-            // Persist to localStorage for recovery
-            try {
-                localStorage.setItem(LAST_IMPORT_KEY, JSON.stringify(data.transactions));
-                setHasLastImport(true);
-            } catch { /* quota exceeded, ignore */ }
         } catch (err) {
             console.error('Parse error:', err);
             setError(err instanceof Error ? err.message : 'Failed to parse file');
             setStatus('error');
         }
-    }, [file, pdfPassword, status]);
+    }, [file, files, pdfPassword, status]);
 
 
     const loadLastImport = useCallback(() => {
@@ -161,6 +233,7 @@ export function useStatementImport(): UseStatementImportReturn {
                 setStatus('ready');
                 setError(null);
                 setFile(null);
+                setFiles([]);
             }
         } catch {
             setError('Failed to load saved import');
@@ -174,11 +247,18 @@ export function useStatementImport(): UseStatementImportReturn {
                 return;
             }
 
+            // Filter out transactions with empty type — they can't be imported
+            const importable = transactions.filter(tx => tx.type === 'income' || tx.type === 'expense');
+            if (importable.length === 0) {
+                setError('No valid transactions to import. Please assign a type to each transaction.');
+                return;
+            }
+
             setStatus('importing');
             setError(null);
 
             try {
-                const inputs: CreateTransactionInput[] = transactions.map((tx, i) => {
+                const inputs: CreateTransactionInput[] = importable.map((tx, i) => {
                     // Always combine date and time with local timezone offset
                     const time = tx.time || '00:00';
                     const transactionDate = toLocalISOString(tx.date, time);
@@ -216,6 +296,7 @@ export function useStatementImport(): UseStatementImportReturn {
 
     const reset = useCallback(() => {
         setFile(null);
+        setFiles([]);
         setTransactions([]);
         setStatus('idle');
         setError(null);
@@ -225,12 +306,14 @@ export function useStatementImport(): UseStatementImportReturn {
     return {
         status,
         file,
+        files,
         transactions,
         setTransactions, // Exposed for UI editing
         error,
         pdfPassword,
         setPdfPassword,
         handleFileSelect,
+        handleFilesSelect,
         parseWithLLM,
         importTransactions,
         loadLastImport,

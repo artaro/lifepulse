@@ -21,7 +21,8 @@ Strict Rules:
     2. If there is a 'รายการ' column: "หักบัญชี", "ชำระเงิน", "โอนเงิน" (outgoing), "ถอนเงิน" = "expense". "เงินเข้า", "รับโอน" = "income".
     3. If the amount has a MINUS sign (e.g. -500.00) in the original statement, it means money left the account = "expense".
     4. If the amount is positive and not in a debit column = "income".
-    5. Default to "expense" if uncertain.
+    5. If you truly cannot determine the type (e.g. a transaction slip without clear context, or ambiguous data), use "" (empty string) as the type.
+    6. Default to "expense" if somewhat uncertain but leaning toward expense.
 
 Output ONLY this JSON array. No markdown formatting. No explanation.`;
 
@@ -132,11 +133,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Validate & filter
+    // Validate & filter — allow empty type ("") for unrecognized transactions
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const validTransactions = transactions.filter((t: any) =>
       t.date && t.description && typeof t.amount === 'number' &&
-      (t.type === 'income' || t.type === 'expense')
+      (t.type === 'income' || t.type === 'expense' || t.type === '')
     );
 
     if (validTransactions.length === 0) {
